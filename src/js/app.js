@@ -25,6 +25,9 @@ class MagicBrushApp {
         this.minZoom = 0.1; // 最小缩放
         this.maxZoom = 5; // 最大缩放
         this.zoomStep = 0.1; // 缩放步长
+        // 视口平移（画布坐标系，与 scale 配合实现以鼠标为中心的缩放）
+        this.viewPanX = 0;
+        this.viewPanY = 0;
         
         // 线条吸附相关属性
         this.snapThreshold = 15; // 吸附阈值(像素)
@@ -171,15 +174,16 @@ class MagicBrushApp {
             });
         });
         
-        // 鼠标滚轮缩放
+        // 鼠标滚轮缩放（以指针下的画布点为锚点）
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            if (e.deltaY < 0) {
-                this.zoomIn();
-            } else {
-                this.zoomOut();
-            }
-        });
+            const { mx, my } = this.clientDeltaFromEvent(e);
+            const dir = e.deltaY < 0 ? 1 : -1;
+            const next = this.zoomLevel + dir * this.zoomStep;
+            this.zoomTowardCanvasPoint(mx, my, next);
+            this.updateZoomDisplay();
+            this.render();
+        }, { passive: false });
         
         // 导入文件
         document.getElementById('importFile').addEventListener('change', this.handleImportFile.bind(this));
@@ -197,10 +201,41 @@ class MagicBrushApp {
         });
     }
     
-    handleMouseDown(e) {
+    /** 鼠标相对画布左上角的偏移（与 canvas 位图一致，未做视口变换） */
+    clientDeltaFromEvent(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / this.zoomLevel;
-        const y = (e.clientY - rect.top) / this.zoomLevel;
+        return {
+            mx: e.clientX - rect.left,
+            my: e.clientY - rect.top
+        };
+    }
+
+    canvasPointToWorld(mx, my) {
+        return {
+            x: (mx - this.viewPanX) / this.zoomLevel,
+            y: (my - this.viewPanY) / this.zoomLevel
+        };
+    }
+
+    eventToWorld(e) {
+        const { mx, my } = this.clientDeltaFromEvent(e);
+        return this.canvasPointToWorld(mx, my);
+    }
+
+    /** 将缩放级别设为 targetZoom，并保持 (mx,my) 下的世界坐标不变 */
+    zoomTowardCanvasPoint(mx, my, targetZoom) {
+        const z0 = this.zoomLevel;
+        const z1 = Math.max(this.minZoom, Math.min(this.maxZoom, targetZoom));
+        if (z1 === z0) return;
+        const wx = (mx - this.viewPanX) / z0;
+        const wy = (my - this.viewPanY) / z0;
+        this.viewPanX = mx - wx * z1;
+        this.viewPanY = my - wy * z1;
+        this.zoomLevel = z1;
+    }
+
+    handleMouseDown(e) {
+        const { x, y } = this.eventToWorld(e);
         
         // 选择工具处理
         if (this.currentTool === 'select') {
@@ -236,7 +271,6 @@ class MagicBrushApp {
             this.selectedLine = clickedLine;
             this.editingLine = clickedLine;
             this.editMode = true;
-            this.showEditingControls();
             this.render();
             return;
         }
@@ -288,9 +322,7 @@ class MagicBrushApp {
     }
     
     handleMouseMove(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / this.zoomLevel;
-        const y = (e.clientY - rect.top) / this.zoomLevel;
+        const { x, y } = this.eventToWorld(e);
         
         // 选择工具拖动元素
         if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
@@ -510,8 +542,9 @@ class MagicBrushApp {
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         
-        // 应用缩放变换
+        // 视口：平移 + 缩放（与 eventToWorld 互逆）
         this.ctx.save();
+        this.ctx.translate(this.viewPanX, this.viewPanY);
         this.ctx.scale(this.zoomLevel, this.zoomLevel);
         
         // 渲染所有图层
@@ -544,11 +577,19 @@ class MagicBrushApp {
                 }
             }
         }
+
+        // 选择工具拖动圆形时持续显示圆心
+        if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement && this.selectedElement.type === 'circle') {
+            this.drawCircleCenter(this.selectedElement.centerX, this.selectedElement.centerY);
+        }
+
+        if (this.editMode && this.editingLine && this.editingLine.points) {
+            this.drawEditingControls();
+        }
+
+        this.drawGridWorld();
         
         this.ctx.restore();
-        
-        // 绘制网格(在缩放变换之外)
-        this.drawGrid();
     }
     
     addLayer(name = null) {
@@ -1038,7 +1079,6 @@ class MagicBrushApp {
             this.editMode = true;
             this.editingPointIndex = -1;
             this.render();
-            this.drawEditingControls();
         } else {
             // 取消编辑
             this.editingLine = null;
@@ -1099,9 +1139,8 @@ class MagicBrushApp {
     handleEditModeMouseMove(e) {
         if (!this.editMode || !this.editingLine) return;
         
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const { mx, my } = this.clientDeltaFromEvent(e);
+        const { x, y } = this.canvasPointToWorld(mx, my);
         
         // 检查是否悬停在控制点上
         let hoveredPointIndex = -1;
@@ -1125,7 +1164,6 @@ class MagicBrushApp {
         if (this.isDrawing && this.editingPointIndex >= 0) {
             this.editingLine.points[this.editingPointIndex] = {x, y};
             this.render();
-            this.drawEditingControls();
             this.saveHistory();
         }
     }
@@ -1282,30 +1320,8 @@ class MagicBrushApp {
         return this.enhanceLineSelection(x, y);
     }
     
-    // 显示编辑控制点
     showEditingControls() {
-        if (!this.editingLine || !this.editingLine.points) return;
-        
         this.render();
-        
-        const ctx = this.ctx;
-        
-        // 绘制控制点
-        this.editingLine.points.forEach((point, index) => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
-            ctx.fillStyle = '#4a9eff';
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.closePath();
-        });
-        
-        // 显示提示信息
-        ctx.fillStyle = '#4a9eff';
-        ctx.font = '14px Arial';
-        ctx.fillText('拖动控制点调整线条，点击空白处取消', 10, 30);
     }
     
     // 编辑图层名称
@@ -1361,23 +1377,27 @@ class MagicBrushApp {
     
     // 缩放功能方法
     zoomIn() {
-        if (this.zoomLevel < this.maxZoom) {
-            this.zoomLevel = Math.min(this.zoomLevel + this.zoomStep, this.maxZoom);
-            this.updateZoomDisplay();
-            this.render();
-        }
+        if (this.zoomLevel >= this.maxZoom) return;
+        const mx = this.canvas.width / 2;
+        const my = this.canvas.height / 2;
+        this.zoomTowardCanvasPoint(mx, my, this.zoomLevel + this.zoomStep);
+        this.updateZoomDisplay();
+        this.render();
     }
     
     zoomOut() {
-        if (this.zoomLevel > this.minZoom) {
-            this.zoomLevel = Math.max(this.zoomLevel - this.zoomStep, this.minZoom);
-            this.updateZoomDisplay();
-            this.render();
-        }
+        if (this.zoomLevel <= this.minZoom) return;
+        const mx = this.canvas.width / 2;
+        const my = this.canvas.height / 2;
+        this.zoomTowardCanvasPoint(mx, my, this.zoomLevel - this.zoomStep);
+        this.updateZoomDisplay();
+        this.render();
     }
     
     zoomReset() {
         this.zoomLevel = 1;
+        this.viewPanX = 0;
+        this.viewPanY = 0;
         this.updateZoomDisplay();
         this.render();
     }
@@ -1529,34 +1549,43 @@ class MagicBrushApp {
         this.render();
     }
     
-    // 绘制网格
-    drawGrid() {
+    // 在世界坐标系绘制网格（与平移/缩放后的内容对齐）
+    drawGridWorld() {
         if (!this.showGrid) return;
         
-        const effectiveGridSize = Math.max(this.minGridSize, this.gridSize * this.zoomLevel);
+        const ctx = this.ctx;
+        const z = this.zoomLevel;
+        const px0 = this.viewPanX;
+        const py0 = this.viewPanY;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const minWx = -px0 / z;
+        const maxWx = (w - px0) / z;
+        const minWy = -py0 / z;
+        const maxWy = (h - py0) / z;
+        const gs = Math.max(this.minGridSize, this.gridSize);
         
-        this.ctx.save();
-        this.ctx.strokeStyle = '#e0e0e0';
-        this.ctx.lineWidth = 0.5;
-        this.ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = Math.max(0.5 / z, 0.25);
+        ctx.globalAlpha = 0.5;
         
-        // 绘制垂直线
-        for (let x = 0; x <= this.canvas.width; x += effectiveGridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.height);
-            this.ctx.stroke();
+        const startX = Math.floor(minWx / gs) * gs;
+        const startY = Math.floor(minWy / gs) * gs;
+        
+        for (let gx = startX; gx <= maxWx + 1e-6; gx += gs) {
+            ctx.beginPath();
+            ctx.moveTo(gx, minWy);
+            ctx.lineTo(gx, maxWy);
+            ctx.stroke();
+        }
+        for (let gy = startY; gy <= maxWy + 1e-6; gy += gs) {
+            ctx.beginPath();
+            ctx.moveTo(minWx, gy);
+            ctx.lineTo(maxWx, gy);
+            ctx.stroke();
         }
         
-        // 绘制水平线
-        for (let y = 0; y <= this.canvas.height; y += effectiveGridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.stroke();
-        }
-        
-        this.ctx.restore();
+        ctx.globalAlpha = 1;
     }
     
     // 设置图层颜色
