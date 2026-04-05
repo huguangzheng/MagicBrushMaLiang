@@ -1,0 +1,232 @@
+{
+  "timestamp": "2026-04-05T08:43:15.463Z",
+  "summary": {
+    "total": 37,
+    "passed": 37,
+    "failed": 0
+  },
+  "details": [
+    {
+      "file": "tests/test-framework.js",
+      "description": "测试框架文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-framework.js",
+      "description": "测试框架核心功能",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-runner.js",
+      "description": "测试运行器文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-runner.js",
+      "description": "测试运行器核心功能",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-web-runner.html",
+      "description": "Web测试运行器文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-web-runner.html",
+      "description": "Web测试运行器核心功能",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test.html",
+      "description": "基础测试页面文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test.html",
+      "description": "基础测试页面功能",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature1-drawing-tools.js",
+      "description": "功能点1测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature1-drawing-tools.js",
+      "description": "功能点1测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature2-color-selection.js",
+      "description": "功能点2测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature2-color-selection.js",
+      "description": "功能点2测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature3-brush-size-line-edit.js",
+      "description": "功能点3测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature3-brush-size-line-edit.js",
+      "description": "功能点3测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature4-layer-management.js",
+      "description": "功能点4测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature4-layer-management.js",
+      "description": "功能点4测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature5-undo-clear.js",
+      "description": "功能点5测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature5-undo-clear.js",
+      "description": "功能点5测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature6-auto-save-export.js",
+      "description": "功能点6测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature6-auto-save-export.js",
+      "description": "功能点6测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/test-feature7-ai-color-optimization.js",
+      "description": "功能点7测试文件",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature7-ai-color-optimization.js",
+      "description": "功能点7测试类",
+      "status": "passed",
+      "message": "✅ 内容正确"
+    },
+    {
+      "file": "tests/README.md",
+      "description": "README.md文档",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/TEST_CHECKLIST.md",
+      "description": "TEST_CHECKLIST.md文档",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "TEST_SYSTEM_SUMMARY.md",
+      "description": "TEST_SYSTEM_SUMMARY.md文档",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "TEST_QUICK_REFERENCE.md",
+      "description": "TEST_QUICK_REFERENCE.md文档",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "run-tests.bat",
+      "description": "run-tests.bat脚本",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "dev-watch.bat",
+      "description": "dev-watch.bat脚本",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "dev-watch.js",
+      "description": "dev-watch.js脚本",
+      "status": "passed",
+      "message": "✅ 文件存在"
+    },
+    {
+      "file": "tests/test-feature1-drawing-tools.js",
+      "description": "功能点1测试用例统计",
+      "status": "passed",
+      "message": "✅ 13 个测试用例"
+    },
+    {
+      "file": "tests/test-feature2-color-selection.js",
+      "description": "功能点2测试用例统计",
+      "status": "passed",
+      "message": "✅ 15 个测试用例"
+    },
+    {
+      "file": "tests/test-feature3-brush-size-line-edit.js",
+      "description": "功能点3测试用例统计",
+      "status": "passed",
+      "message": "✅ 16 个测试用例"
+    },
+    {
+      "file": "tests/test-feature4-layer-management.js",
+      "description": "功能点4测试用例统计",
+      "status": "passed",
+      "message": "✅ 20 个测试用例"
+    },
+    {
+      "file": "tests/test-feature5-undo-clear.js",
+      "description": "功能点5测试用例统计",
+      "status": "passed",
+      "message": "✅ 13 个测试用例"
+    },
+    {
+      "file": "tests/test-feature6-auto-save-export.js",
+      "description": "功能点6测试用例统计",
+      "status": "passed",
+      "message": "✅ 15 个测试用例"
+    },
+    {
+      "file": "tests/test-feature7-ai-color-optimization.js",
+      "description": "功能点7测试用例统计",
+      "status": "passed",
+      "message": "✅ 13 个测试用例"
+    },
+    {
+      "file": "所有测试文件",
+      "description": "测试用例总数",
+      "status": "passed",
+      "message": "✅ 105 个测试用例"
+    }
+  ]
+}

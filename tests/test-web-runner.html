@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法画笔 - 测试运行器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #4a9eff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: #4a9eff;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #357abd;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #3d3d3d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        select {
+            background-color: #3d3d3d;
+            color: #ffffff;
+            border: 1px solid #4a9eff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .results {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .results h2 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+        }
+
+        .summary {
+            background-color: #3d3d3d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .summary-item .label {
+            font-size: 12px;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+
+        .summary-item.total .value {
+            color: #4a9eff;
+        }
+
+        .summary-item.passed .value {
+            color: #4caf50;
+        }
+
+        .summary-item.failed .value {
+            color: #f44336;
+        }
+
+        .test-suite {
+            background-color: #3d3d3d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .test-suite h3 {
+            color: #4a9eff;
+            margin-bottom: 10px;
+        }
+
+        .test-case {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .test-case.passed {
+            background-color: #4caf5020;
+            border-left: 3px solid #4caf50;
+        }
+
+        .test-case.failed {
+            background-color: #f4433620;
+            border-left: 3px solid #f44336;
+        }
+
+        .test-case .name {
+            flex: 1;
+        }
+
+        .test-case .status {
+            font-weight: bold;
+        }
+
+        .test-case.passed .status {
+            color: #4caf50;
+        }
+
+        .test-case.failed .status {
+            color: #f44336;
+        }
+
+        .test-case .error {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #3d3d3d;
+            border-top-color: #4a9eff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #b0b0b0;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 魔法画笔测试运行器</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <button id="runAllBtn">运行所有测试</button>
+                <button id="runSuiteBtn">运行选中套件</button>
+                <button id="listSuitesBtn">列出测试套件</button>
+            </div>
+
+            <div class="control-group">
+                <select id="suiteSelect">
+                    <option value="">选择测试套件...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button id="exportReportBtn">导出测试报告</button>
+                <button id="clearResultsBtn">清除结果</button>
+            </div>
+        </div>
+
+        <div class="results">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>正在运行测试...</div>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <p>点击"运行所有测试"开始测试</p>
+            </div>
+
+            <div id="resultsContent" style="display: none;">
+                <h2>测试结果</h2>
+                <div class="summary">
+                    <div class="summary-item total">
+                        <div class="value" id="totalTests">0</div>
+                        <div class="label">总数</div>
+                    </div>
+                    <div class="summary-item passed">
+                        <div class="value" id="passedTests">0</div>
+                        <div class="label">通过</div>
+                    </div>
+                    <div class="summary-item failed">
+                        <div class="value" id="failedTests">0</div>
+                        <div class="label">失败</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="value" id="successRate">0%</div>
+                        <div class="label">成功率</div>
+                    </div>
+                </div>
+                <div id="testResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟测试框架和应用
+        class TestFramework {
+            constructor() {
+                this.testCases = [];
+                this.results = [];
+            }
+
+            describe(name, callback) {
+                const suite = {
+                    name: name,
+                    testCases: []
+                };
+                const previousSuite = this.currentSuite;
+                this.currentSuite = suite;
+                callback();
+                this.currentSuite = previousSuite;
+                if (suite.testCases.length > 0) {
+                    this.testCases.push(suite);
+                }
+            }
+
+            it(name, callback) {
+                const testCase = {
+                    name: name,
+                    callback: callback,
+                    suite: this.currentSuite
+                };
+                if (this.currentSuite) {
+                    this.currentSuite.testCases.push(testCase);
+                }
+            }
+
+            assertEqual(actual, expected, message = '') {
+                if (actual !== expected) {
+                    throw new Error(`Expected ${expected} but got ${actual}. ${message}`);
+                }
+            }
+
+            assertNotEqual(actual, expected, message = '') {
+                if (actual === expected) {
+                    throw new Error(`Expected ${actual} to not equal ${expected}. ${message}`);
+                }
+            }
+
+            assertTrue(value, message = '') {
+                if (!value) {
+                    throw new Error(`Expected ${value} to be true. ${message}`);
+                }
+            }
+
+            assertFalse(value, message = '') {
+                if (value) {
+                    throw new Error(`Expected ${value} to be false. ${message}`);
+                }
+            }
+
+            assertNull(value, message = '') {
+                if (value !== null) {
+                    throw new Error(`Expected ${value} to be null. ${message}`);
+                }
+            }
+
+            assertNotNull(value, message = '') {
+                if (value === null) {
+                    throw new Error(`Expected ${value} to not be null. ${message}`);
+                }
+            }
+
+            assertContains(haystack, needle, message = '') {
+                if (!haystack.includes(needle)) {
+                    throw new Error(`Expected "${haystack}" to contain "${needle}". ${message}`);
+                }
+            }
+
+            assertInArray(array, item, message = '') {
+                if (!array.includes(item)) {
+                    throw new Error(`Expected array to contain ${item}. ${message}`);
+                }
+            }
+
+            async runAll() {
+                this.results = [];
+                let totalTests = 0;
+                let passedTests = 0;
+                let failedTests = 0;
+
+                for (const suite of this.testCases) {
+                    for (const testCase of suite.testCases) {
+                        totalTests++;
+                        try {
+                            await testCase.callback();
+                            passedTests++;
+                            this.results.push({
+                                suite: suite.name,
+                                test: testCase.name,
+                                status: 'passed',
+                                error: null
+                            });
+                        } catch (error) {
+                            failedTests++;
+                            this.results.push({
+                                suite: suite.name,
+                                test: testCase.name,
+                                status: 'failed',
+                                error: error.message
+                            });
+                        }
+                    }
+                }
+
+                return {
+                    total: totalTests,
+                    passed: passedTests,
+                    failed: failedTests,
+                    results: this.results
+                };
+            }
+
+            getSuiteNames() {
+                return this.testCases.map(suite => suite.name);
+            }
+        }
+
+        // 创建Web测试运行器
+        class WebTestRunner {
+            constructor() {
+                this.framework = new TestFramework();
+                this.app = this.createMockApp();
+                this.currentResults = null;
+                this.setupEventListeners();
+                this.loadTestSuites();
+            }
+
+            createMockApp() {
+                return {
+                    canvas: { width: 800, height: 600 },
+                    layers: [{ id: 1, name: '背景层', visible: true, locked: false, elements: [] }],
+                    currentLayerIndex: 0,
+                    currentTool: 'brush',
+                    currentColor: '#000000',
+                    brushSize: 5,
+                    history: [],
+                    historyIndex: -1,
+                    addLayer: function(name) {
+                        const layer = { id: Date.now(), name: name || `图层${this.layers.length + 1}`, visible: true, locked: false, elements: [] };
+                        this.layers.push(layer);
+                        this.currentLayerIndex = this.layers.length - 1;
+                    },
+                    deleteLayer: function() {
+                        if (this.layers.length > 1) {
+                            this.layers.splice(this.currentLayerIndex, 1);
+                            this.currentLayerIndex = Math.min(this.currentLayerIndex, this.layers.length - 1);
+                        }
+                    },
+                    saveHistory: function() {
+                        this.history.push(JSON.stringify(this.layers));
+                        this.historyIndex++;
+                    },
+                    undo: function() {
+                        if (this.historyIndex > 0) {
+                            this.historyIndex--;
+                            this.layers = JSON.parse(this.history[this.historyIndex]);
+                        }
+                    }
+                };
+            }
+
+            setupEventListeners() {
+                document.getElementById('runAllBtn').addEventListener('click', () => this.runAllTests());
+                document.getElementById('runSuiteBtn').addEventListener('click', () => this.runSelectedSuite());
+                document.getElementById('listSuitesBtn').addEventListener('click', () => this.listSuites());
+                document.getElementById('exportReportBtn').addEventListener('click', () => this.exportReport());
+                document.getElementById('clearResultsBtn').addEventListener('click', () => this.clearResults());
+            }
+
+            loadTestSuites() {
+                // 这里可以动态加载测试套件
+                // 目前使用模拟数据
+            }
+
+            async runAllTests() {
+                this.showLoading(true);
+                this.hideEmptyState();
+
+                // 注册一些示例测试
+                this.registerSampleTests();
+
+                try {
+                    this.currentResults = await this.framework.runAll();
+                    this.displayResults(this.currentResults);
+                } catch (error) {
+                    console.error('测试运行失败:', error);
+                    alert('测试运行失败: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            runSelectedSuite() {
+                const suiteName = document.getElementById('suiteSelect').value;
+                if (!suiteName) {
+                    alert('请先选择一个测试套件');
+                    return;
+                }
+                alert(`运行套件: ${suiteName} (功能开发中)`);
+            }
+
+            listSuites() {
+                const suites = this.framework.getSuiteNames();
+                if (suites.length === 0) {
+                    alert('没有可用的测试套件');
+                    return;
+                }
+                alert('可用的测试套件:\n' + suites.map((s, i) => `${i + 1}. ${s}`).join('\n'));
+            }
+
+            registerSampleTests() {
+                this.framework.describe('示例测试套件', () => {
+                    this.framework.it('应该能够通过简单的测试', async () => {
+                        this.framework.assertEqual(1 + 1, 2);
+                    });
+
+                    this.framework.it('应该能够测试基本的断言', async () => {
+                        this.framework.assertTrue(true);
+                        this.framework.assertFalse(false);
+                        this.framework.assertNull(null);
+                        this.framework.assertNotNull('not null');
+                    });
+
+                    this.framework.it('应该能够测试数组操作', async () => {
+                        const arr = [1, 2, 3];
+                        this.framework.assertInArray(arr, 2);
+                        this.framework.assertContains('hello world', 'world');
+                    });
+
+                    this.framework.it('应该能够测试失败的情况', async () => {
+                        // 这个测试会失败
+                        this.framework.assertEqual(1 + 1, 3);
+                    });
+                });
+            }
+
+            displayResults(results) {
+                document.getElementById('resultsContent').style.display = 'block';
+                document.getElementById('totalTests').textContent = results.total;
+                document.getElementById('passedTests').textContent = results.passed;
+                document.getElementById('failedTests').textContent = results.failed;
+                document.getElementById('successRate').textContent = ((results.passed / results.total) * 100).toFixed(2) + '%';
+
+                const testResultsDiv = document.getElementById('testResults');
+                testResultsDiv.innerHTML = '';
+
+                // 按套件分组显示结果
+                const suiteGroups = {};
+                results.results.forEach(result => {
+                    if (!suiteGroups[result.suite]) {
+                        suiteGroups[result.suite] = [];
+                    }
+                    suiteGroups[result.suite].push(result);
+                });
+
+                Object.keys(suiteGroups).forEach(suiteName => {
+                    const suiteDiv = document.createElement('div');
+                    suiteDiv.className = 'test-suite';
+
+                    const suiteTitle = document.createElement('h3');
+                    suiteTitle.textContent = suiteName;
+                    suiteDiv.appendChild(suiteTitle);
+
+                    suiteGroups[suiteName].forEach(result => {
+                        const testCaseDiv = document.createElement('div');
+                        testCaseDiv.className = `test-case ${result.status}`;
+
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'name';
+                        nameDiv.textContent = result.test;
+
+                        const statusDiv = document.createElement('div');
+                        statusDiv.className = 'status';
+                        statusDiv.textContent = result.status === 'passed' ? '✓ 通过' : '✗ 失败';
+
+                        testCaseDiv.appendChild(nameDiv);
+                        testCaseDiv.appendChild(statusDiv);
+
+                        if (result.error) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'error';
+                            errorDiv.textContent = result.error;
+                            testCaseDiv.appendChild(errorDiv);
+                        }
+
+                        suiteDiv.appendChild(testCaseDiv);
+                    });
+
+                    testResultsDiv.appendChild(suiteDiv);
+                });
+            }
+
+            exportReport() {
+                if (!this.currentResults) {
+                    alert('没有可导出的测试结果');
+                    return;
+                }
+
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    summary: {
+                        total: this.currentResults.total,
+                        passed: this.currentResults.passed,
+                        failed: this.currentResults.failed,
+                        successRate: ((this.currentResults.passed / this.currentResults.total) * 100).toFixed(2) + '%'
+                    },
+                    details: this.currentResults.results
+                };
+
+                const dataStr = JSON.stringify(report, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `test-report-${Date.now()}.json`;
+                link.click();
+
+                URL.revokeObjectURL(url);
+            }
+
+            clearResults() {
+                document.getElementById('resultsContent').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                this.currentResults = null;
+            }
+
+            showLoading(show) {
+                const loading = document.getElementById('loading');
+                if (show) {
+                    loading.classList.add('show');
+                } else {
+                    loading.classList.remove('show');
+                }
+            }
+
+            hideEmptyState() {
+                document.getElementById('emptyState').style.display = 'none';
+            }
+        }
+
+        // 初始化测试运行器
+        document.addEventListener('DOMContentLoaded', () => {
+            new WebTestRunner();
+        });
+    </script>
+</body>
+</html>
