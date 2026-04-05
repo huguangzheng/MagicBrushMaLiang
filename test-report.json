@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-05T13:03:17.044Z",
+  "timestamp": "2026-04-05T13:31:14.483Z",
   "summary": {
-    "total": 128,
-    "passed": 128,
-    "failed": 0,
-    "successRate": "100.00%"
+    "total": 145,
+    "passed": 143,
+    "failed": 2,
+    "successRate": "98.62%"
   },
   "details": [
     {
@@ -772,6 +772,108 @@
     {
       "suite": "功能点8: 画布缩放和线条吸附选择",
       "test": "选中的线条应该被标记",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置背景颜色为白色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置背景颜色为灰色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置背景颜色为黑色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置背景颜色为蓝色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置背景为透明",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "设置背景颜色应该保存历史",
+      "status": "failed",
+      "error": "Expected 3 but got 2. "
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "选择工具应该能够选中元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "选择工具应该只选择当前图层的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动线条元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动直线元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动矩形元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动圆形元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够删除选中的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "删除元素应该保存历史",
+      "status": "failed",
+      "error": "Expected 3 but got 2. "
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦不应该添加元素到图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该删除路径上的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦只对当前图层生效",
       "status": "passed",
       "error": null
     }

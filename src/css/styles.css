@@ -525,3 +525,43 @@ input[type="range"]::-webkit-slider-thumb {
     stroke-width: 3;
     filter: drop-shadow(0 0 5px #4a9eff);
 }
+
+/* 背景颜色选择样式 */
+.background-color-control {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #3d3d3d;
+    border-radius: 4px;
+}
+
+.background-color-control label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #b0b0b0;
+}
+
+.background-colors {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.bg-color-btn {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #5d5d5d;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bg-color-btn:hover {
+    border-color: #4a9eff;
+    transform: scale(1.1);
+}
+
+.bg-color-btn.active {
+    border-color: #4a9eff;
+    box-shadow: 0 0 5px #4a9eff;
+}

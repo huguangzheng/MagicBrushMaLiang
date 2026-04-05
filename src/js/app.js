@@ -18,6 +18,7 @@ class MagicBrushApp {
         this.editingLine = null; // 当前编辑的线条
         this.editMode = false; // 是否处于编辑模式
         this.editingPointIndex = -1; // 当前编辑的点的索引
+        this.backgroundColor = '#ffffff'; // 背景颜色
         
         // 缩放相关属性
         this.zoomLevel = 1; // 缩放级别 (1 = 100%)
@@ -113,6 +114,18 @@ class MagicBrushApp {
         document.getElementById('deleteLayerBtn').addEventListener('click', () => this.deleteLayer());
         document.getElementById('moveLayerUpBtn').addEventListener('click', () => this.moveLayerUp());
         document.getElementById('moveLayerDownBtn').addEventListener('click', () => this.moveLayerDown());
+        
+        // 背景颜色选择事件
+        document.querySelectorAll('.bg-color-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const color = e.target.dataset.color;
+                this.setBackgroundColor(color);
+                
+                // 更新按钮状态
+                document.querySelectorAll('.bg-color-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
         
         // 缩放控制事件
         document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
@@ -443,9 +456,20 @@ class MagicBrushApp {
     }
     
     render() {
-        // 清空画布
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // 清空画布并填充背景颜色
+        if (this.backgroundColor === 'transparent') {
+            // 透明背景 - 绘制棋盘格
+            const gridSize = 10;
+            for (let x = 0; x < this.canvas.width; x += gridSize) {
+                for (let y = 0; y < this.canvas.height; y += gridSize) {
+                    this.ctx.fillStyle = ((x / gridSize + y / gridSize) % 2 === 0) ? '#ffffff' : '#cccccc';
+                    this.ctx.fillRect(x, y, gridSize, gridSize);
+                }
+            }
+        } else {
+            this.ctx.fillStyle = this.backgroundColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         
         // 应用缩放变换
         this.ctx.save();
@@ -1424,6 +1448,13 @@ class MagicBrushApp {
                 layer.elements.splice(index, 1);
             }
         });
+    }
+    
+    // 设置背景颜色
+    setBackgroundColor(color) {
+        this.backgroundColor = color;
+        this.render();
+        this.saveHistory();
     }
 }
 

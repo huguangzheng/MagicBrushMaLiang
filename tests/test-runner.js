@@ -15,6 +15,7 @@ const Feature5Tests = require('./test-feature5-undo-clear.js');
 const Feature6Tests = require('./test-feature6-auto-save-export.js');
 const Feature7Tests = require('./test-feature7-ai-color-optimization.js');
 const Feature8Tests = require('./test-feature8-zoom-and-snap.js');
+const Feature9Tests = require('./test-feature9-background-and-select.js');
 
 class TestRunner {
     constructor() {
@@ -106,6 +107,12 @@ class TestRunner {
             snapThreshold: 15,
             hoveredLine: null,
             selectedLine: null,
+            
+            // 背景颜色
+            backgroundColor: '#ffffff',
+            
+            // 选择工具相关属性
+            selectedElement: null,
 
             // 模拟方法
             addLayer: function(name) {
@@ -368,6 +375,79 @@ class TestRunner {
             // 新增方法 - 检测线条悬停
             detectLineHover: function(x, y) {
                 return this.enhanceLineSelection(x, y);
+            },
+            
+            // 新增方法 - 设置背景颜色
+            setBackgroundColor: function(color) {
+                this.backgroundColor = color;
+            },
+            
+            // 新增方法 - 移动元素
+            moveElement: function(element, dx, dy) {
+                if (element.type === 'brush' || element.type === 'eraser') {
+                    element.points.forEach(point => {
+                        point.x += dx;
+                        point.y += dy;
+                    });
+                } else if (element.type === 'line') {
+                    element.startX += dx;
+                    element.startY += dy;
+                    element.endX += dx;
+                    element.endY += dy;
+                } else if (element.type === 'rect') {
+                    element.startX += dx;
+                    element.startY += dy;
+                } else if (element.type === 'circle') {
+                    element.centerX += dx;
+                    element.centerY += dy;
+                }
+            },
+            
+            // 新增方法 - 删除选中元素
+            deleteSelectedElement: function() {
+                if (!this.selectedElement) return;
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer) return;
+                const index = layer.elements.indexOf(this.selectedElement);
+                if (index > -1) {
+                    layer.elements.splice(index, 1);
+                }
+                this.selectedElement = null;
+            },
+            
+            // 新增方法 - 应用橡皮擦
+            applyEraser: function(eraserPath) {
+                if (!eraserPath || !eraserPath.points || eraserPath.points.length < 2) return;
+                
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer) return;
+                
+                const eraserSize = eraserPath.size;
+                const elementsToRemove = [];
+                
+                layer.elements.forEach(element => {
+                    if (element.type === 'brush' || element.type === 'eraser') {
+                        for (const eraserPoint of eraserPath.points) {
+                            for (const elementPoint of element.points) {
+                                const distance = Math.sqrt(
+                                    Math.pow(eraserPoint.x - elementPoint.x, 2) + 
+                                    Math.pow(eraserPoint.y - elementPoint.y, 2)
+                                );
+                                if (distance < eraserSize) {
+                                    elementsToRemove.push(element);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                elementsToRemove.forEach(element => {
+                    const index = layer.elements.indexOf(element);
+                    if (index > -1) {
+                        layer.elements.splice(index, 1);
+                    }
+                });
             }
         };
     }
@@ -408,6 +488,9 @@ class TestRunner {
 
         const feature8Tests = new Feature8Tests(this.framework, this.app);
         feature8Tests.registerTests();
+
+        const feature9Tests = new Feature9Tests(this.framework, this.app);
+        feature9Tests.registerTests();
 
         this.testSuites = this.framework.getSuiteNames();
 
