@@ -79,6 +79,10 @@ class MagicBrushApp {
         this.canvas.width = width;
         this.canvas.height = height;
 
+        // 设置初始鼠标位置为画布中心
+        this.mouseX = width / 2;
+        this.mouseY = height / 2;
+
         // 设置白色背景
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fillRect(0, 0, width, height);
@@ -321,10 +325,13 @@ class MagicBrushApp {
     handleMouseMove(e) {
         const { x, y } = this.eventToWorld(e);
 
-        // 更新鼠标位置（用于标尺滑块）
+        // 更新鼠标位置（用于标尺滑块和正交虚线）
         const rect = this.canvas.getBoundingClientRect();
         this.mouseX = e.clientX - rect.left;
         this.mouseY = e.clientY - rect.top;
+
+        // 立即更新标尺和正交虚线
+        this.updateRulers();
 
         // 选择工具拖动元素
         if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
@@ -766,15 +773,28 @@ class MagicBrushApp {
         this.layers.forEach(layer => {
             const previewCanvas = document.getElementById(`layerPreview${layer.id}`);
             if (!previewCanvas) return;
-            
+
             const previewCtx = previewCanvas.getContext('2d');
-            previewCtx.fillStyle = '#ffffff';
-            previewCtx.fillRect(0, 0, 40, 40);
-            
+
+            // 绘制图层颜色背景
+            if (layer.color === 'transparent') {
+                // 透明背景 - 绘制棋盘格
+                const gridSize = 5;
+                for (let x = 0; x < 40; x += gridSize) {
+                    for (let y = 0; y < 40; y += gridSize) {
+                        previewCtx.fillStyle = ((x / gridSize + y / gridSize) % 2 === 0) ? '#ffffff' : '#cccccc';
+                        previewCtx.fillRect(x, y, gridSize, gridSize);
+                    }
+                }
+            } else {
+                previewCtx.fillStyle = layer.color;
+                previewCtx.fillRect(0, 0, 40, 40);
+            }
+
             // 绘制图层内容的缩略图
             const scaleX = 40 / this.canvas.width;
             const scaleY = 40 / this.canvas.height;
-            
+
             layer.elements.forEach(element => {
                 if (element.type === 'brush' || element.type === 'eraser') {
                     previewCtx.beginPath();
@@ -782,14 +802,14 @@ class MagicBrushApp {
                     previewCtx.lineWidth = Math.max(1, element.size * Math.min(scaleX, scaleY));
                     previewCtx.lineCap = 'round';
                     previewCtx.lineJoin = 'round';
-                    
+
                     if (element.points.length > 0) {
                         previewCtx.moveTo(element.points[0].x * scaleX, element.points[0].y * scaleY);
                         for (let i = 1; i < element.points.length; i++) {
                             previewCtx.lineTo(element.points[i].x * scaleX, element.points[i].y * scaleY);
                         }
                     }
-                    
+
                     previewCtx.stroke();
                     previewCtx.closePath();
                 }
@@ -1686,25 +1706,49 @@ class MagicBrushApp {
 
     // 绘制鼠标位置的正交虚线
     drawMouseCrosshair() {
-        if (this.mouseX === 0 && this.mouseY === 0) return;
-
         const ctx = this.ctx;
         ctx.save();
         ctx.strokeStyle = '#4a9eff';
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]);
 
-        // 绘制垂直线
+        // 绘制垂直线（完全覆盖画布高度）
         ctx.beginPath();
         ctx.moveTo(this.mouseX, 0);
         ctx.lineTo(this.mouseX, this.canvas.height);
         ctx.stroke();
 
-        // 绘制水平线
+        // 绘制水平线（完全覆盖画布宽度）
         ctx.beginPath();
         ctx.moveTo(0, this.mouseY);
         ctx.lineTo(this.canvas.width, this.mouseY);
         ctx.stroke();
+
+        // 计算相对于画布中心的坐标
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const relativeX = Math.round(this.mouseX - centerX);
+        const relativeY = Math.round(this.mouseY - centerY);
+
+        // 显示坐标信息
+        ctx.setLineDash([]); // 取消虚线
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.9)';
+        ctx.font = '12px sans-serif';
+
+        const coordText = `X: ${relativeX}, Y: ${relativeY}`;
+        const textWidth = ctx.measureText(coordText).width;
+
+        // 绘制坐标背景
+        const padding = 4;
+        const bgX = this.mouseX + 10;
+        const bgY = this.mouseY - 25;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(bgX, bgY, textWidth + padding * 2, 20);
+
+        // 绘制坐标文本
+        ctx.fillStyle = '#4a9eff';
+        ctx.fillText(coordText, bgX + padding, bgY + 14);
 
         ctx.restore();
     }
