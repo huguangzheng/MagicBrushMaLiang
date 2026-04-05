@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-05T09:55:02.225Z",
+  "timestamp": "2026-04-05T10:20:43.362Z",
   "summary": {
     "total": 113,
-    "passed": 107,
-    "failed": 6,
-    "successRate": "94.69%"
+    "passed": 113,
+    "failed": 0,
+    "successRate": "100.00%"
   },
   "details": [
     {
@@ -232,8 +232,8 @@
     {
       "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
       "test": "改变画笔大小不应影响已绘制的内容",
-      "status": "failed",
-      "error": "Expected 10 but got 5. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
@@ -316,8 +316,8 @@
     {
       "suite": "功能点4: 图层管理能力",
       "test": "新图层应该有唯一ID",
-      "status": "failed",
-      "error": "Expected 1775382902218 to not equal 1775382902218. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点4: 图层管理能力",
@@ -418,14 +418,14 @@
     {
       "suite": "功能点4: 图层管理能力",
       "test": "应该能够在指定图层上绘制",
-      "status": "failed",
-      "error": "Expected 1 but got 6. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点4: 图层管理能力",
       "test": "清除图层不应该影响其他图层",
-      "status": "failed",
-      "error": "Expected 1 but got 2. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点4: 图层管理能力",
@@ -466,8 +466,8 @@
     {
       "suite": "功能点5: 撤销/一键清除功能",
       "test": "应该正确管理历史记录索引",
-      "status": "failed",
-      "error": "Expected 50 but got 49. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点5: 撤销/一键清除功能",
@@ -502,8 +502,8 @@
     {
       "suite": "功能点5: 撤销/一键清除功能",
       "test": "清除图层应该保存历史记录",
-      "status": "failed",
-      "error": "Expected 50 but got 49. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点5: 撤销/一键清除功能",

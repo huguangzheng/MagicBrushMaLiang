@@ -99,7 +99,7 @@ class TestRunner {
             addLayer: function(name) {
                 const layerName = name || `图层${this.layers.length + 1}`;
                 const layer = {
-                    id: Date.now(),
+                    id: Date.now() + Math.random(), // 确保唯一ID
                     name: layerName,
                     visible: true,
                     locked: false,

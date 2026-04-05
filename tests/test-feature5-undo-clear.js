@@ -115,6 +115,9 @@ class Feature5Tests {
         });
 
         this.framework.it('应该正确管理历史记录索引', async () => {
+            // 重置历史记录
+            this.app.history = [];
+            this.app.historyIndex = -1;
             const initialIndex = this.app.historyIndex;
 
             // 添加操作
@@ -272,6 +275,10 @@ class Feature5Tests {
         });
 
         this.framework.it('清除图层应该保存历史记录', async () => {
+            // 重置历史记录
+            this.app.history = [];
+            this.app.historyIndex = -1;
+            
             this.app.addLayer('测试图层');
 
             // 添加内容

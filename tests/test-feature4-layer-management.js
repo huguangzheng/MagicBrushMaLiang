@@ -295,6 +295,10 @@ class Feature4Tests {
      */
     testLayerIndependentEdit() {
         this.framework.it('应该能够在指定图层上绘制', async () => {
+            // 清空现有图层
+            this.app.layers = [];
+            this.app.currentLayerIndex = 0;
+            
             this.app.addLayer('图层1');
             this.app.addLayer('图层2');
 
@@ -324,6 +328,10 @@ class Feature4Tests {
         });
 
         this.framework.it('清除图层不应该影响其他图层', async () => {
+            // 清空现有图层
+            this.app.layers = [];
+            this.app.currentLayerIndex = 0;
+            
             this.app.addLayer('图层1');
             this.app.addLayer('图层2');
 

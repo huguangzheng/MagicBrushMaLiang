@@ -145,6 +145,9 @@ class Feature3Tests {
         });
 
         this.framework.it('改变画笔大小不应影响已绘制的内容', async () => {
+            // 清空现有元素
+            this.app.layers[0].elements = [];
+            
             const initialSize = 10;
             const newSize = 20;
 
