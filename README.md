@@ -133,12 +133,24 @@ npx http-server
 
 ```
 MagicBrushMaLiang/
-├── index.html          # 主HTML文件
-├── styles.css          # 样式文件
-├── app.js              # 应用核心逻辑
-├── README.md           # 项目说明
-└── LICENSE             # MIT许可证
+├── src/                        # 源代码目录
+│   ├── js/                     # JavaScript文件
+│   │   └── app.js             # 主应用逻辑
+│   └── css/                    # CSS样式文件
+│       └── styles.css         # 主样式表
+├── tests/                      # 测试目录
+│   ├── test-framework.js       # 测试框架
+│   ├── test-runner.js          # 测试运行器
+│   ├── test-feature*.js        # 功能测试用例
+│   └── README.md               # 测试文档
+├── index.html                  # 主HTML文件
+├── start.bat                   # 启动脚本
+├── run-tests.bat               # 测试脚本
+├── README.md                   # 项目说明
+└── LICENSE                     # MIT许可证
 ```
+
+详细信息请查看 [项目结构说明](PROJECT_STRUCTURE.md)。
 
 ## 开发计划
 

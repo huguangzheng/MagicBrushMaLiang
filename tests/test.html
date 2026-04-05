@@ -111,7 +111,7 @@
         function runTests() {
             // 测试1: 基础结构测试
             try {
-                const files = ['index.html', 'styles.css', 'app.js'];
+                const files = ['index.html', 'src/css/styles.css', 'src/js/app.js'];
                 let allExist = true;
                 files.forEach(file => {
                     fetch(file).then(response => {
@@ -131,7 +131,7 @@
             // 测试2: JavaScript语法测试
             try {
                 const script = document.createElement('script');
-                script.src = 'app.js';
+                script.src = '../src/js/app.js';
                 script.onload = () => {
                     document.getElementById('test2').className = 'status pass';
                     document.getElementById('test2').textContent = '通过';

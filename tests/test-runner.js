@@ -5,7 +5,7 @@
 
 // 加载测试框架
 const TestFramework = require('./test-framework.js');
-const MagicBrushApp = require('../app.js');
+const MagicBrushApp = require('../src/js/app.js');
 
 // 加载所有功能测试
 const Feature1Tests = require('./test-feature1-drawing-tools.js');

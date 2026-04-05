@@ -10,8 +10,8 @@ const { exec } = require('child_process');
 class DevWatcher {
     constructor() {
         this.watchFiles = [
-            'app.js',
-            'styles.css',
+            'src/js/app.js',
+            'src/css/styles.css',
             'index.html'
         ];
         this.testFiles = [
