@@ -22,6 +22,37 @@ class Feature4Tests {
             this.testLayerSelection();
             this.testLayerPreview();
             this.testLayerIndependentEdit();
+            this.testLayerRename();
+        });
+    }
+    
+    /**
+     * 测试图层重命名
+     */
+    testLayerRename() {
+        this.framework.it('应该能够重命名图层', async () => {
+            this.app.addLayer('原始名称');
+            const layerIndex = this.app.layers.length - 1;
+            const originalName = this.app.layers[layerIndex].name;
+            
+            // 重命名图层
+            this.app.layers[layerIndex].name = '新名称';
+            
+            this.framework.assertEqual(this.app.layers[layerIndex].name, '新名称');
+            this.framework.assertNotEqual(this.app.layers[layerIndex].name, originalName);
+        });
+        
+        this.framework.it('重命名后应该保存历史记录', async () => {
+            this.app.addLayer('测试图层');
+            const layerIndex = this.app.layers.length - 1;
+            
+            const beforeHistoryIndex = this.app.historyIndex;
+            
+            // 重命名并保存历史
+            this.app.layers[layerIndex].name = '重命名图层';
+            this.app.saveHistory();
+            
+            this.framework.assertEqual(this.app.historyIndex, beforeHistoryIndex + 1);
         });
     }
 

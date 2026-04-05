@@ -1,0 +1,689 @@
+{
+  "timestamp": "2026-04-05T09:55:02.225Z",
+  "summary": {
+    "total": 113,
+    "passed": 107,
+    "failed": 6,
+    "successRate": "94.69%"
+  },
+  "details": [
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔工具应该能够绘制线条",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔工具应该支持多种颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "橡皮擦工具应该能够擦除内容",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "直线工具应该能够绘制直线",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "矩形工具应该能够绘制矩形",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "圆形工具应该能够绘制圆形",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "点击线条应该能够选中并编辑",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "选中线条后应该能够调整控制点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "点击空白处应该取消编辑",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔应该支持颜色选择",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔颜色应该在绘制时应用",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔大小应该可以调节",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔大小应该在绘制时应用",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点1: 基本绘图工具",
+      "test": "画笔大小应该在有效范围内",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该能够通过颜色选择器设置颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "颜色选择器应该支持预览",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该支持RGB颜色格式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "RGB值应该在有效范围内",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该支持HEX颜色格式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "HEX颜色格式应该验证",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该支持3位和6位HEX格式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "颜色应该应用到画笔工具",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "颜色应该应用到形状工具",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "颜色应该应用到所有绘图工具",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该记录使用的颜色历史",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "颜色历史应该去重",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该验证颜色格式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该处理无效颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该提供默认颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "应该能够通过快捷按钮选择颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点2: 颜色选择",
+      "test": "快捷颜色选择应该更新颜色选择器",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔大小应该在1-50像素范围内",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔大小应该支持整数",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "应该能够通过滑块调节画笔大小",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔大小应该实时显示",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔大小应该应用到所有工具",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔大小应该在绘制时实时应用",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "改变画笔大小不应影响已绘制的内容",
+      "status": "failed",
+      "error": "Expected 10 but got 5. "
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "画笔预览应该实时显示当前画笔大小",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "改变画笔大小应该更新预览",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "改变颜色应该更新预览",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "应该能够进入编辑模式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "编辑模式应该正确初始化",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "应该能够选择线条",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "选择线条后应该显示控制点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "应该能够拖动控制点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "拖动控制点应该更新线条",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "编辑应该保持线条连续性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "编辑应该保持线条属性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "test": "编辑操作应该可以撤销",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够添加新图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "新图层应该有唯一ID",
+      "status": "failed",
+      "error": "Expected 1775382902218 to not equal 1775382902218. "
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "新图层应该有默认名称",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "新图层应该是空的",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够删除图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该至少保留一个图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "删除图层后应该更新当前图层索引",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够向上移动图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "顶层图层不能继续上移",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够向下移动图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "底层图层不能继续下移",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够切换图层可见性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "隐藏图层不应该在渲染中显示",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "新图层默认应该是可见的",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够选择图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "选择图层后应该更新UI",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够生成图层预览",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "图层预览应该实时更新",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够在指定图层上绘制",
+      "status": "failed",
+      "error": "Expected 1 but got 6. "
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "清除图层不应该影响其他图层",
+      "status": "failed",
+      "error": "Expected 1 but got 2. "
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "应该能够重命名图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点4: 图层管理能力",
+      "test": "重命名后应该保存历史记录",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该能够撤销操作",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "撤销应该恢复到上一个状态",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "撤销应该在历史记录为空时不执行",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该限制历史记录数量",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该正确管理历史记录索引",
+      "status": "failed",
+      "error": "Expected 50 but got 49. "
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该保存完整的图层状态",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该在撤销后正确更新当前图层索引",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该能够清除整个画布",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "清除画布应该保存历史记录",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该能够清除当前图层",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "清除图层应该保存历史记录",
+      "status": "failed",
+      "error": "Expected 50 but got 49. "
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "应该能够撤销清除操作",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点5: 撤销/一键清除功能",
+      "test": "撤销清除应该恢复完整状态",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "应该能够自动保存项目",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "自动保存应该包含所有图层数据",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "应该按照指定间隔自动保存",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "自动保存应该记录时间戳",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "自动保存应该包含画布尺寸",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "自动保存应该包含图层状态",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "应该能够从自动保存恢复项目",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "应该能够导出工程为JSON格式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导出的工程应该包含版本信息",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导出的工程应该包含时间戳",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "应该能够导入工程文件",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导入应该处理无效数据",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导出和导入应该保持数据完整性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导出的JSON应该是格式化的",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点6: 自动存档和工程导入导出",
+      "test": "导出的文件名应该包含时间戳",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够收集图层中的颜色信息",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够去重颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够调用AI配色优化",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "AI优化应该生成有效的颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够应用优化后的颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "优化应该只修改颜色属性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "优化应该保持线条结构",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "优化应该保持图层结构",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "优化操作应该可以撤销",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "空图层应该能够处理",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够处理多种颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够处理无效颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点7: AI配色优化",
+      "test": "应该能够处理缺少颜色的元素",
+      "status": "passed",
+      "error": null
+    }
+  ]
+}

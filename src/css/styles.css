@@ -394,3 +394,91 @@ input[type="range"]::-webkit-slider-thumb {
     color: #ffffff;
     font-size: 16px;
 }
+
+/* 工具按钮文字样式 */
+.tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.tool-btn span {
+    font-size: 10px;
+    text-align: center;
+}
+
+/* 颜色选择器容器 */
+.color-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quick-colors {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+}
+
+.quick-color {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.quick-color:hover {
+    transform: scale(1.1);
+}
+
+.quick-color:active {
+    transform: scale(0.95);
+}
+
+/* 画笔预览 */
+.brush-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #3d3d3d;
+    border-radius: 4px;
+    padding: 5px;
+    margin-top: 10px;
+}
+
+#brushPreviewCanvas {
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+/* 图层名称编辑 */
+.layer-name {
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.layer-name:hover {
+    background-color: #4d4d4d;
+}
+
+.layer-name.editing {
+    background-color: #4a9eff;
+    color: #ffffff;
+}
+
+.layer-name input {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    width: 100%;
+    outline: none;
+}

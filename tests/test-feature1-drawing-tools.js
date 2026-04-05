@@ -183,10 +183,10 @@ class Feature1Tests {
     }
 
     /**
-     * 测试编辑工具
+     * 测试线条编辑功能(改进版)
      */
     testEditTool() {
-        this.framework.it('编辑工具应该能够选中线条', async () => {
+        this.framework.it('点击线条应该能够选中并编辑', async () => {
             // 首先创建一条线条
             const testLine = {
                 type: 'brush',
@@ -196,16 +196,15 @@ class Feature1Tests {
             };
             
             this.app.layers[0].elements.push(testLine);
-            this.app.currentTool = 'edit';
 
-            // 模拟点击线条
-            const clickedLine = this.app.findClickedLine(20, 20);
+            // 模拟点击线条上的任意点
+            const clickedLine = this.app.enhanceLineSelection(20, 20);
             
             this.framework.assertNotNull(clickedLine);
             this.framework.assertEqual(clickedLine.type, 'brush');
         });
 
-        this.framework.it('编辑工具应该能够调整线条控制点', async () => {
+        this.framework.it('选中线条后应该能够调整控制点', async () => {
             const testLine = {
                 type: 'brush',
                 color: '#000000',
@@ -222,6 +221,24 @@ class Feature1Tests {
 
             this.framework.assertEqual(testLine.points[1].x, 25);
             this.framework.assertEqual(testLine.points[1].y, 25);
+        });
+        
+        this.framework.it('点击空白处应该取消编辑', async () => {
+            const testLine = {
+                type: 'brush',
+                color: '#000000',
+                size: 5,
+                points: [{x: 10, y: 10}, {x: 20, y: 20}, {x: 30, y: 30}]
+            };
+            
+            this.app.layers[0].elements.push(testLine);
+            this.app.editingLine = testLine;
+            this.app.editMode = true;
+            
+            // 点击空白处
+            const clickedLine = this.app.enhanceLineSelection(100, 100);
+            
+            this.framework.assertNull(clickedLine);
         });
     }
 

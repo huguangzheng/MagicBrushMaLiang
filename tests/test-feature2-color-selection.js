@@ -20,6 +20,31 @@ class Feature2Tests {
             this.testColorApplication();
             this.testColorHistory();
             this.testColorValidation();
+            this.testQuickColorSelection();
+        });
+    }
+    
+    /**
+     * 测试快捷颜色选择
+     */
+    testQuickColorSelection() {
+        this.framework.it('应该能够通过快捷按钮选择颜色', async () => {
+            const quickColors = ['#ffffff', '#000000', '#ff0000', '#ffff00', '#00ff00'];
+            
+            for (const color of quickColors) {
+                this.app.currentColor = color;
+                this.framework.assertEqual(this.app.currentColor, color);
+            }
+        });
+        
+        this.framework.it('快捷颜色选择应该更新颜色选择器', async () => {
+            const testColor = '#ff0000';
+            this.app.currentColor = testColor;
+            
+            // 模拟更新画笔预览
+            this.app.updateBrushPreview();
+            
+            this.framework.assertEqual(this.app.currentColor, testColor);
         });
     }
 

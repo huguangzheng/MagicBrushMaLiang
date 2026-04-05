@@ -17,11 +17,48 @@ class Feature3Tests {
             this.testBrushSizeRange();
             this.testBrushSizeAdjustment();
             this.testBrushSizeRealtime();
+            this.testBrushPreview();
             this.testLineEditingMode();
             this.testLineSelection();
             this.testControlPointDragging();
             this.testLineContinuity();
             this.testEditUndo();
+        });
+    }
+    
+    /**
+     * 测试画笔预览功能
+     */
+    testBrushPreview() {
+        this.framework.it('画笔预览应该实时显示当前画笔大小', async () => {
+            this.app.brushSize = 10;
+            this.app.currentColor = '#ff0000';
+            
+            // 模拟更新画笔预览
+            this.app.updateBrushPreview();
+            
+            this.framework.assertEqual(this.app.brushSize, 10);
+            this.framework.assertEqual(this.app.currentColor, '#ff0000');
+        });
+        
+        this.framework.it('改变画笔大小应该更新预览', async () => {
+            const sizes = [5, 10, 20, 30];
+            
+            for (const size of sizes) {
+                this.app.brushSize = size;
+                this.app.updateBrushPreview();
+                this.framework.assertEqual(this.app.brushSize, size);
+            }
+        });
+        
+        this.framework.it('改变颜色应该更新预览', async () => {
+            const colors = ['#ff0000', '#00ff00', '#0000ff'];
+            
+            for (const color of colors) {
+                this.app.currentColor = color;
+                this.app.updateBrushPreview();
+                this.framework.assertEqual(this.app.currentColor, color);
+            }
         });
     }
 

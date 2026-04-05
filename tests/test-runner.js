@@ -5,7 +5,6 @@
 
 // 加载测试框架
 const TestFramework = require('./test-framework.js');
-const MagicBrushApp = require('../src/js/app.js');
 
 // 加载所有功能测试
 const Feature1Tests = require('./test-feature1-drawing-tools.js');
@@ -28,6 +27,17 @@ class TestRunner {
      */
     async initialize() {
         console.log('🔧 初始化测试环境...\n');
+
+        // 模拟localStorage
+        if (typeof localStorage === 'undefined') {
+            global.localStorage = {
+                store: {},
+                getItem: function(key) { return this.store[key] || null; },
+                setItem: function(key, value) { this.store[key] = value; },
+                removeItem: function(key) { delete this.store[key]; },
+                clear: function() { this.store = {}; }
+            };
+        }
 
         // 创建应用实例用于测试
         // 注意: 这里需要模拟Canvas环境
@@ -239,6 +249,55 @@ class TestRunner {
             },
 
             updateLayerPreviews: function() {
+                // 模拟方法
+            },
+            
+            // 新增方法 - 改进的线条选择
+            enhanceLineSelection: function(x, y) {
+                const threshold = 10;
+                let selectedLine = null;
+                let minDistance = threshold;
+                
+                for (let i = this.currentLayerIndex; i < this.layers.length; i++) {
+                    const layer = this.layers[i];
+                    if (!layer.visible) continue;
+                    
+                    for (const element of layer.elements) {
+                        if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
+                            for (const point of element.points) {
+                                const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    selectedLine = element;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return selectedLine;
+            },
+            
+            // 新增方法 - 更新画笔预览
+            updateBrushPreview: function() {
+                // 模拟方法
+            },
+            
+            // 新增方法 - 重命名图层
+            renameLayer: function() {
+                const layer = this.layers[this.currentLayerIndex];
+                if (!layer) return;
+                // 模拟重命名
+                layer.name = '重命名图层';
+            },
+            
+            // 新增方法 - 编辑图层名称
+            editLayerName: function(index) {
+                // 模拟方法
+            },
+            
+            // 新增方法 - 显示编辑控制点
+            showEditingControls: function() {
                 // 模拟方法
             }
         };

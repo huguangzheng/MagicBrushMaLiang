@@ -16,42 +16,54 @@
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
                     </svg>
+                    <span>画笔</span>
                 </button>
                 <button class="tool-btn" data-tool="eraser" title="橡皮擦">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.77-.78 2.04 0 2.83L5.03 20h7.66l8.72-8.72c.79-.78.79-2.05 0-2.83l-4.85-4.86c-.39-.39-.91-.59-1.42-.59zM17 18l-1.13-1.13 2.76-2.76 1.13 1.13L17 18z"/>
                     </svg>
+                    <span>橡皮擦</span>
                 </button>
                 <button class="tool-btn" data-tool="line" title="直线">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
+                    <span>直线</span>
                 </button>
                 <button class="tool-btn" data-tool="rect" title="矩形">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/>
                     </svg>
+                    <span>矩形</span>
                 </button>
                 <button class="tool-btn" data-tool="circle" title="圆形">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                     </svg>
-                </button>
-                <button class="tool-btn" data-tool="edit" title="编辑线条">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                    </svg>
+                    <span>圆形</span>
                 </button>
             </div>
             
             <div class="tool-group">
                 <label>颜色</label>
-                <input type="color" id="colorPicker" value="#000000">
+                <div class="color-picker-container">
+                    <input type="color" id="colorPicker" value="#000000">
+                    <div class="quick-colors">
+                        <button class="quick-color" data-color="#ffffff" title="白色" style="background-color: #ffffff; border: 1px solid #ccc;"></button>
+                        <button class="quick-color" data-color="#000000" title="黑色" style="background-color: #000000;"></button>
+                        <button class="quick-color" data-color="#ff0000" title="红色" style="background-color: #ff0000;"></button>
+                        <button class="quick-color" data-color="#ffff00" title="黄色" style="background-color: #ffff00;"></button>
+                        <button class="quick-color" data-color="#00ff00" title="绿色" style="background-color: #00ff00;"></button>
+                    </div>
+                </div>
             </div>
             
             <div class="tool-group">
                 <label>画笔大小: <span id="brushSizeValue">5</span>px</label>
                 <input type="range" id="brushSize" min="1" max="50" value="5">
+                <div class="brush-preview">
+                    <canvas id="brushPreviewCanvas" width="50" height="50"></canvas>
+                </div>
             </div>
             
             <div class="tool-group">
@@ -81,6 +93,7 @@
             <div class="layer-controls">
                 <button id="addLayerBtn">添加图层</button>
                 <button id="deleteLayerBtn">删除图层</button>
+                <button id="renameLayerBtn">重命名图层</button>
                 <button id="moveLayerUpBtn">上移</button>
                 <button id="moveLayerDownBtn">下移</button>
             </div>

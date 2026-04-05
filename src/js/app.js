@@ -28,6 +28,7 @@ class MagicBrushApp {
         this.addLayer('背景层');
         this.addLayer('图层1');
         this.startAutoSave();
+        this.updateBrushPreview();
         this.render();
     }
     
@@ -59,10 +60,21 @@ class MagicBrushApp {
             this.currentColor = e.target.value;
         });
         
+        // 快捷颜色选择
+        document.querySelectorAll('.quick-color').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const color = e.target.dataset.color;
+                this.currentColor = color;
+                document.getElementById('colorPicker').value = color;
+                this.updateBrushPreview();
+            });
+        });
+        
         // 画笔大小
         document.getElementById('brushSize').addEventListener('input', (e) => {
             this.brushSize = parseInt(e.target.value);
             document.getElementById('brushSizeValue').textContent = this.brushSize;
+            this.updateBrushPreview();
         });
         
         // 画布绘图事件
@@ -82,6 +94,7 @@ class MagicBrushApp {
         // 图层管理事件
         document.getElementById('addLayerBtn').addEventListener('click', () => this.addLayer());
         document.getElementById('deleteLayerBtn').addEventListener('click', () => this.deleteLayer());
+        document.getElementById('renameLayerBtn').addEventListener('click', () => this.renameLayer());
         document.getElementById('moveLayerUpBtn').addEventListener('click', () => this.moveLayerUp());
         document.getElementById('moveLayerDownBtn').addEventListener('click', () => this.moveLayerDown());
         
@@ -97,12 +110,16 @@ class MagicBrushApp {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        // 如果是编辑模式
-        if (this.currentTool === 'edit') {
-            this.handleEditModeClick(x, y);
+        // 首先检查是否点击了现有线条进行编辑
+        const clickedLine = this.enhanceLineSelection(x, y);
+        if (clickedLine) {
+            this.editingLine = clickedLine;
+            this.editMode = true;
+            this.showEditingControls();
             return;
         }
         
+        // 如果没有点击线条，则进行正常绘制
         this.isDrawing = true;
         this.lastX = x;
         this.lastY = y;
@@ -357,7 +374,7 @@ class MagicBrushApp {
                     <canvas id="layerPreview${layer.id}" width="40" height="40"></canvas>
                 </div>
                 <div class="layer-info">
-                    <div class="layer-name">${layer.name}</div>
+                    <div class="layer-name" data-layer-index="${i}" title="点击选择，双击重命名">${layer.name}</div>
                 </div>
                 <div class="layer-actions">
                     <button onclick="app.toggleLayerVisibility(${i})">${layer.visible ? '👁️' : '👁️‍🗨️'}</button>
@@ -368,6 +385,13 @@ class MagicBrushApp {
                 if (!e.target.closest('.layer-actions')) {
                     this.selectLayer(i);
                 }
+            });
+            
+            // 添加双击重命名功能
+            const layerName = layerItem.querySelector('.layer-name');
+            layerName.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                this.editLayerName(i);
             });
             
             layerList.appendChild(layerItem);
@@ -465,7 +489,7 @@ class MagicBrushApp {
     startAutoSave() {
         this.autoSaveInterval = setInterval(() => {
             this.autoSave();
-        }, 5000); // 5秒自动保存
+        }, 60000); // 1分钟自动保存
     }
     
     autoSave() {
@@ -841,6 +865,141 @@ class MagicBrushApp {
             this.isDrawing = false;
             this.editingPointIndex = -1;
         }
+    }
+    
+    // 更新画笔预览
+    updateBrushPreview() {
+        const previewCanvas = document.getElementById('brushPreviewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
+        
+        // 清空预览画布
+        previewCtx.fillStyle = '#ffffff';
+        previewCtx.fillRect(0, 0, 50, 50);
+        
+        // 绘制画笔预览
+        previewCtx.beginPath();
+        previewCtx.fillStyle = this.currentColor;
+        previewCtx.arc(25, 25, this.brushSize / 2, 0, Math.PI * 2);
+        previewCtx.fill();
+        previewCtx.closePath();
+    }
+    
+    // 重命名图层
+    renameLayer() {
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer) return;
+        
+        const newName = prompt('请输入新的图层名称:', layer.name);
+        if (newName && newName.trim() !== '') {
+            layer.name = newName.trim();
+            this.updateLayerList();
+            this.saveHistory();
+        }
+    }
+    
+    // 改进的线条选择功能 - 点击任意点选择线条
+    enhanceLineSelection(x, y) {
+        // 查找点击位置附近的线条
+        const threshold = 10;
+        let selectedLine = null;
+        let minDistance = threshold;
+        
+        for (let i = this.currentLayerIndex; i < this.layers.length; i++) {
+            const layer = this.layers[i];
+            if (!layer.visible) continue;
+            
+            for (const element of layer.elements) {
+                if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
+                    // 检查是否点击了线条上的任意点
+                    for (const point of element.points) {
+                        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            selectedLine = element;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return selectedLine;
+    }
+    
+    // 显示编辑控制点
+    showEditingControls() {
+        if (!this.editingLine || !this.editingLine.points) return;
+        
+        this.render();
+        
+        const ctx = this.ctx;
+        
+        // 绘制控制点
+        this.editingLine.points.forEach((point, index) => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#4a9eff';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+        });
+        
+        // 显示提示信息
+        ctx.fillStyle = '#4a9eff';
+        ctx.font = '14px Arial';
+        ctx.fillText('拖动控制点调整线条，点击空白处取消', 10, 30);
+    }
+    
+    // 编辑图层名称
+    editLayerName(index) {
+        const layer = this.layers[index];
+        if (!layer) return;
+        
+        const layerNameElements = document.querySelectorAll('.layer-name');
+        let layerNameElement = null;
+        
+        layerNameElements.forEach(el => {
+            if (parseInt(el.dataset.layerIndex) === index) {
+                layerNameElement = el;
+            }
+        });
+        
+        if (!layerNameElement) return;
+        
+        // 创建输入框
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = layer.name;
+        input.style.width = '100%';
+        
+        layerNameElement.innerHTML = '';
+        layerNameElement.appendChild(input);
+        layerNameElement.classList.add('editing');
+        
+        input.focus();
+        input.select();
+        
+        // 处理输入完成
+        const finishEdit = () => {
+            const newName = input.value.trim();
+            if (newName !== '') {
+                layer.name = newName;
+                this.saveHistory();
+            }
+            layerNameElement.innerHTML = layer.name;
+            layerNameElement.classList.remove('editing');
+        };
+        
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            } else if (e.key === 'Escape') {
+                layerNameElement.innerHTML = layer.name;
+                layerNameElement.classList.remove('editing');
+            }
+        });
     }
 }
 
