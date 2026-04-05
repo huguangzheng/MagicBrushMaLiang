@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法画笔 - MagicBrush</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧工具栏 -->
+        <div class="toolbar">
+            <h2>工具</h2>
+            <div class="tool-group">
+                <button class="tool-btn active" data-tool="brush" title="画笔">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" data-tool="eraser" title="橡皮擦">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.77-.78 2.04 0 2.83L5.03 20h7.66l8.72-8.72c.79-.78.79-2.05 0-2.83l-4.85-4.86c-.39-.39-.91-.59-1.42-.59zM17 18l-1.13-1.13 2.76-2.76 1.13 1.13L17 18z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" data-tool="line" title="直线">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" data-tool="rect" title="矩形">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" data-tool="circle" title="圆形">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" data-tool="edit" title="编辑线条">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="tool-group">
+                <label>颜色</label>
+                <input type="color" id="colorPicker" value="#000000">
+            </div>
+            
+            <div class="tool-group">
+                <label>画笔大小: <span id="brushSizeValue">5</span>px</label>
+                <input type="range" id="brushSize" min="1" max="50" value="5">
+            </div>
+            
+            <div class="tool-group">
+                <button class="action-btn" id="undoBtn">撤销</button>
+                <button class="action-btn" id="clearCanvasBtn">清除画布</button>
+                <button class="action-btn" id="clearLayerBtn">清除当前图层</button>
+            </div>
+            
+            <div class="tool-group">
+                <button class="action-btn" id="exportBtn">导出工程</button>
+                <button class="action-btn" id="importBtn">导入工程</button>
+            </div>
+            
+            <div class="tool-group">
+                <button class="action-btn ai-btn" id="aiColorBtn">AI优化配色</button>
+            </div>
+        </div>
+        
+        <!-- 中间画布区域 -->
+        <div class="canvas-container">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+        
+        <!-- 右侧图层面板 -->
+        <div class="layer-panel">
+            <h2>图层</h2>
+            <div class="layer-controls">
+                <button id="addLayerBtn">添加图层</button>
+                <button id="deleteLayerBtn">删除图层</button>
+                <button id="moveLayerUpBtn">上移</button>
+                <button id="moveLayerDownBtn">下移</button>
+            </div>
+            <div id="layerList" class="layer-list">
+                <!-- 图层列表将动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+    
+    <script src="app.js"></script>
+</body>
+</html>

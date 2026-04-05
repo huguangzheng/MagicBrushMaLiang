@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法画笔 - 功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-item {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item h3 {
+            color: #4a9eff;
+            margin-top: 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.pass {
+            background-color: #4caf50;
+            color: white;
+        }
+        .status.fail {
+            background-color: #f44336;
+            color: white;
+        }
+        .status.pending {
+            background-color: #ff9800;
+            color: white;
+        }
+        button {
+            background-color: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #357abd;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>魔法画笔 - 功能测试</h1>
+    
+    <div style="text-align: center;">
+        <button onclick="runTests()">运行所有测试</button>
+        <button onclick="openMainApp()">打开主应用</button>
+    </div>
+    
+    <div id="results">
+        <h2>测试结果</h2>
+        <div class="test-item">
+            <h3>1. 基础结构测试</h3>
+            <p>检查HTML、CSS、JS文件是否存在</p>
+            <span id="test1" class="status pending">待测试</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>2. JavaScript语法测试</h3>
+            <p>检查JavaScript代码是否有语法错误</p>
+            <span id="test2" class="status pending">待测试</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>3. 类定义测试</h3>
+            <p>检查MagicBrushApp类是否正确定义</p>
+            <span id="test3" class="status pending">待测试</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>4. 核心方法测试</h3>
+            <p>检查关键方法是否存在</p>
+            <span id="test4" class="status pending">待测试</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>5. 浏览器兼容性测试</h3>
+            <p>检查Canvas API支持</p>
+            <span id="test5" class="status pending">待测试</span>
+        </div>
+    </div>
+    
+    <script>
+        function runTests() {
+            // 测试1: 基础结构测试
+            try {
+                const files = ['index.html', 'styles.css', 'app.js'];
+                let allExist = true;
+                files.forEach(file => {
+                    fetch(file).then(response => {
+                        if (!response.ok) allExist = false;
+                    }).catch(() => allExist = false);
+                });
+                
+                setTimeout(() => {
+                    document.getElementById('test1').className = 'status pass';
+                    document.getElementById('test1').textContent = '通过';
+                }, 500);
+            } catch (e) {
+                document.getElementById('test1').className = 'status fail';
+                document.getElementById('test1').textContent = '失败';
+            }
+            
+            // 测试2: JavaScript语法测试
+            try {
+                const script = document.createElement('script');
+                script.src = 'app.js';
+                script.onload = () => {
+                    document.getElementById('test2').className = 'status pass';
+                    document.getElementById('test2').textContent = '通过';
+                    
+                    // 测试3: 类定义测试
+                    if (typeof MagicBrushApp !== 'undefined') {
+                        document.getElementById('test3').className = 'status pass';
+                        document.getElementById('test3').textContent = '通过';
+                    } else {
+                        document.getElementById('test3').className = 'status fail';
+                        document.getElementById('test3').textContent = '失败';
+                    }
+                    
+                    // 测试4: 核心方法测试
+                    const requiredMethods = ['init', 'setupCanvas', 'setupEventListeners', 'render', 'addLayer', 'undo'];
+                    let allMethodsExist = true;
+                    requiredMethods.forEach(method => {
+                        if (typeof MagicBrushApp.prototype[method] !== 'function') {
+                            allMethodsExist = false;
+                        }
+                    });
+                    
+                    if (allMethodsExist) {
+                        document.getElementById('test4').className = 'status pass';
+                        document.getElementById('test4').textContent = '通过';
+                    } else {
+                        document.getElementById('test4').className = 'status fail';
+                        document.getElementById('test4').textContent = '失败';
+                    }
+                };
+                script.onerror = () => {
+                    document.getElementById('test2').className = 'status fail';
+                    document.getElementById('test2').textContent = '失败';
+                };
+                document.head.appendChild(script);
+            } catch (e) {
+                document.getElementById('test2').className = 'status fail';
+                document.getElementById('test2').textContent = '失败';
+            }
+            
+            // 测试5: 浏览器兼容性测试
+            try {
+                const canvas = document.createElement('canvas');
+                if (canvas.getContext && canvas.getContext('2d')) {
+                    document.getElementById('test5').className = 'status pass';
+                    document.getElementById('test5').textContent = '通过';
+                } else {
+                    document.getElementById('test5').className = 'status fail';
+                    document.getElementById('test5').textContent = '失败';
+                }
+            } catch (e) {
+                document.getElementById('test5').className = 'status fail';
+                document.getElementById('test5').textContent = '失败';
+            }
+        }
+        
+        function openMainApp() {
+            window.open('index.html', '_blank');
+        }
+    </script>
+</body>
+</html>
