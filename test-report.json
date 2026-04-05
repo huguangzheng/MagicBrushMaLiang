@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-05T10:20:43.362Z",
+  "timestamp": "2026-04-05T11:19:43.362Z",
   "summary": {
-    "total": 113,
-    "passed": 113,
-    "failed": 0,
-    "successRate": "100.00%"
+    "total": 128,
+    "passed": 127,
+    "failed": 1,
+    "successRate": "99.22%"
   },
   "details": [
     {
@@ -682,6 +682,96 @@
     {
       "suite": "功能点7: AI配色优化",
       "test": "应该能够处理缺少颜色的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "应该能够放大画布",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "放大不应该超过最大缩放级别",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "应该能够缩小画布",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "缩小不应该低于最小缩放级别",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "应该能够重置缩放到100%",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "缩放级别应该在有效范围内",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "最小缩放应该是0.1",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "最大缩放应该是5",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "鼠标靠近线条时应该能够检测到",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "吸附阈值应该正确设置",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "超出吸附阈值不应该检测到线条",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "应该能够选择所有图层的线条",
+      "status": "failed",
+      "error": "Expected null to not be null. "
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "上层图层的线条应该优先被选择",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "悬停的线条应该被标记",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点8: 画布缩放和线条吸附选择",
+      "test": "选中的线条应该被标记",
       "status": "passed",
       "error": null
     }

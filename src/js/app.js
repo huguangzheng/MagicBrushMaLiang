@@ -19,6 +19,17 @@ class MagicBrushApp {
         this.editMode = false; // 是否处于编辑模式
         this.editingPointIndex = -1; // 当前编辑的点的索引
         
+        // 缩放相关属性
+        this.zoomLevel = 1; // 缩放级别 (1 = 100%)
+        this.minZoom = 0.1; // 最小缩放
+        this.maxZoom = 5; // 最大缩放
+        this.zoomStep = 0.1; // 缩放步长
+        
+        // 线条吸附相关属性
+        this.snapThreshold = 15; // 吸附阈值(像素)
+        this.hoveredLine = null; // 鼠标悬停的线条
+        this.selectedLine = null; // 选中的线条
+        
         this.init();
     }
     
@@ -98,6 +109,21 @@ class MagicBrushApp {
         document.getElementById('moveLayerUpBtn').addEventListener('click', () => this.moveLayerUp());
         document.getElementById('moveLayerDownBtn').addEventListener('click', () => this.moveLayerDown());
         
+        // 缩放控制事件
+        document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
+        document.getElementById('zoomResetBtn').addEventListener('click', () => this.zoomReset());
+        
+        // 鼠标滚轮缩放
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                this.zoomIn();
+            } else {
+                this.zoomOut();
+            }
+        });
+        
         // 导入文件
         document.getElementById('importFile').addEventListener('change', this.handleImportFile.bind(this));
         
@@ -107,15 +133,17 @@ class MagicBrushApp {
     
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const x = (e.clientX - rect.left) / this.zoomLevel;
+        const y = (e.clientY - rect.top) / this.zoomLevel;
         
-        // 首先检查是否点击了现有线条进行编辑
+        // 首先检查是否点击了现有线条进行编辑(检查所有图层)
         const clickedLine = this.enhanceLineSelection(x, y);
         if (clickedLine) {
+            this.selectedLine = clickedLine;
             this.editingLine = clickedLine;
             this.editMode = true;
             this.showEditingControls();
+            this.render();
             return;
         }
         
@@ -166,6 +194,19 @@ class MagicBrushApp {
     }
     
     handleMouseMove(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / this.zoomLevel;
+        const y = (e.clientY - rect.top) / this.zoomLevel;
+        
+        // 检测鼠标悬停在线条上(吸附提示)
+        if (!this.isDrawing) {
+            const hoveredLine = this.detectLineHover(x, y);
+            if (hoveredLine !== this.hoveredLine) {
+                this.hoveredLine = hoveredLine;
+                this.render();
+            }
+        }
+        
         // 如果是编辑模式，使用编辑模式的处理函数
         if (this.currentTool === 'edit') {
             this.handleEditModeMouseMove(e);
@@ -173,10 +214,6 @@ class MagicBrushApp {
         }
         
         if (!this.isDrawing) return;
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
         
         if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
             this.currentPath.points.push({x, y});
@@ -231,12 +268,33 @@ class MagicBrushApp {
         this.currentShape = null;
     }
     
-    drawPath(path) {
+    drawPath(path, isHovered = false, isSelected = false) {
         const ctx = this.ctx;
+        
+        // 如果是选中或悬停状态,先绘制高亮效果
+        if (isSelected || isHovered) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#4a9eff';
+            ctx.lineWidth = path.size + 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalAlpha = 0.3;
+            
+            if (path.points.length > 0) {
+                ctx.moveTo(path.points[0].x, path.points[0].y);
+                for (let i = 1; i < path.points.length; i++) {
+                    ctx.lineTo(path.points[i].x, path.points[i].y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.closePath();
+            ctx.globalAlpha = 1;
+        }
         
         ctx.beginPath();
         ctx.strokeStyle = path.type === 'eraser' ? '#ffffff' : path.color;
-        ctx.lineWidth = path.size;
+        ctx.lineWidth = isSelected ? path.size + 2 : path.size;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -279,18 +337,28 @@ class MagicBrushApp {
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // 应用缩放变换
+        this.ctx.save();
+        this.ctx.scale(this.zoomLevel, this.zoomLevel);
+        
         // 渲染所有图层
         this.layers.forEach(layer => {
             if (!layer.visible) return;
             
             layer.elements.forEach(element => {
+                // 检查是否是悬停或选中的线条
+                const isHovered = element === this.hoveredLine;
+                const isSelected = element === this.selectedLine;
+                
                 if (element.type === 'brush' || element.type === 'eraser') {
-                    this.drawPath(element);
+                    this.drawPath(element, isHovered, isSelected);
                 } else if (element.type === 'line' || element.type === 'rect' || element.type === 'circle') {
-                    this.drawShape(element);
+                    this.drawShape(element, isHovered, isSelected);
                 }
             });
         });
+        
+        this.ctx.restore();
     }
     
     addLayer(name = null) {
@@ -897,14 +965,15 @@ class MagicBrushApp {
         }
     }
     
-    // 改进的线条选择功能 - 点击任意点选择线条
+    // 改进的线条选择功能 - 点击任意点选择线条(检查所有图层)
     enhanceLineSelection(x, y) {
         // 查找点击位置附近的线条
-        const threshold = 10;
+        const threshold = this.snapThreshold;
         let selectedLine = null;
         let minDistance = threshold;
         
-        for (let i = this.currentLayerIndex; i < this.layers.length; i++) {
+        // 检查所有图层(从上到下)
+        for (let i = this.layers.length - 1; i >= 0; i--) {
             const layer = this.layers[i];
             if (!layer.visible) continue;
             
@@ -923,6 +992,11 @@ class MagicBrushApp {
         }
         
         return selectedLine;
+    }
+    
+    // 检测鼠标悬停在线条上
+    detectLineHover(x, y) {
+        return this.enhanceLineSelection(x, y);
     }
     
     // 显示编辑控制点
@@ -1000,6 +1074,34 @@ class MagicBrushApp {
                 layerNameElement.classList.remove('editing');
             }
         });
+    }
+    
+    // 缩放功能方法
+    zoomIn() {
+        if (this.zoomLevel < this.maxZoom) {
+            this.zoomLevel = Math.min(this.zoomLevel + this.zoomStep, this.maxZoom);
+            this.updateZoomDisplay();
+            this.render();
+        }
+    }
+    
+    zoomOut() {
+        if (this.zoomLevel > this.minZoom) {
+            this.zoomLevel = Math.max(this.zoomLevel - this.zoomStep, this.minZoom);
+            this.updateZoomDisplay();
+            this.render();
+        }
+    }
+    
+    zoomReset() {
+        this.zoomLevel = 1;
+        this.updateZoomDisplay();
+        this.render();
+    }
+    
+    updateZoomDisplay() {
+        const zoomPercent = Math.round(this.zoomLevel * 100);
+        document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
     }
 }
 

@@ -482,3 +482,46 @@ input[type="range"]::-webkit-slider-thumb {
     width: 100%;
     outline: none;
 }
+
+/* 缩放控制样式 */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.zoom-controls button {
+    background-color: #3d3d3d;
+    border: 1px solid #4d4d4d;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.zoom-controls button:hover {
+    background-color: #4a9eff;
+    border-color: #4a9eff;
+}
+
+.zoom-controls button:active {
+    transform: scale(0.95);
+}
+
+#zoomLevel {
+    font-size: 14px;
+    min-width: 50px;
+    text-align: center;
+    color: #4a9eff;
+    font-weight: bold;
+}
+
+/* 选中线条高亮样式 */
+.selected-line-highlight {
+    stroke: #4a9eff;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px #4a9eff);
+}

@@ -14,6 +14,7 @@ const Feature4Tests = require('./test-feature4-layer-management.js');
 const Feature5Tests = require('./test-feature5-undo-clear.js');
 const Feature6Tests = require('./test-feature6-auto-save-export.js');
 const Feature7Tests = require('./test-feature7-ai-color-optimization.js');
+const Feature8Tests = require('./test-feature8-zoom-and-snap.js');
 
 class TestRunner {
     constructor() {
@@ -94,6 +95,17 @@ class TestRunner {
             editingLine: null,
             editMode: false,
             editingPointIndex: -1,
+            
+            // 缩放相关属性
+            zoomLevel: 1,
+            minZoom: 0.1,
+            maxZoom: 5,
+            zoomStep: 0.1,
+            
+            // 线条吸附相关属性
+            snapThreshold: 15,
+            hoveredLine: null,
+            selectedLine: null,
 
             // 模拟方法
             addLayer: function(name) {
@@ -299,6 +311,32 @@ class TestRunner {
             // 新增方法 - 显示编辑控制点
             showEditingControls: function() {
                 // 模拟方法
+            },
+            
+            // 新增方法 - 缩放功能
+            zoomIn: function() {
+                if (this.zoomLevel < this.maxZoom) {
+                    this.zoomLevel = Math.min(this.zoomLevel + this.zoomStep, this.maxZoom);
+                }
+            },
+            
+            zoomOut: function() {
+                if (this.zoomLevel > this.minZoom) {
+                    this.zoomLevel = Math.max(this.zoomLevel - this.zoomStep, this.minZoom);
+                }
+            },
+            
+            zoomReset: function() {
+                this.zoomLevel = 1;
+            },
+            
+            updateZoomDisplay: function() {
+                // 模拟方法
+            },
+            
+            // 新增方法 - 检测线条悬停
+            detectLineHover: function(x, y) {
+                return this.enhanceLineSelection(x, y);
             }
         };
     }
@@ -336,6 +374,9 @@ class TestRunner {
         // 功能点7: AI配色优化
         const feature7Tests = new Feature7Tests(this.framework, this.app);
         feature7Tests.registerTests();
+
+        const feature8Tests = new Feature8Tests(this.framework, this.app);
+        feature8Tests.registerTests();
 
         this.testSuites = this.framework.getSuiteNames();
 
