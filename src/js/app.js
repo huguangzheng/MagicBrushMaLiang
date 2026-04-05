@@ -37,6 +37,14 @@ class MagicBrushApp {
         this.dragOffsetX = 0; // 拖动偏移X
         this.dragOffsetY = 0; // 拖动偏移Y
         
+        // 网格相关属性
+        this.showGrid = true; // 是否显示网格
+        this.gridSize = 10; // 网格大小(像素)
+        this.minGridSize = 5; // 最小网格大小
+        
+        // 图层限制
+        this.maxLayers = 16; // 最大图层数
+        
         this.init();
     }
     
@@ -57,6 +65,13 @@ class MagicBrushApp {
         
         this.canvas.width = width;
         this.canvas.height = height;
+        
+        // 初始化背景图层
+        if (this.layers.length === 0) {
+            this.addLayer('背景图层');
+            // 设置背景图层颜色为白色
+            this.layers[0].color = '#ffffff';
+        }
         
         // 设置白色背景
         this.ctx.fillStyle = '#ffffff';
@@ -131,6 +146,30 @@ class MagicBrushApp {
         document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
         document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
         document.getElementById('zoomResetBtn').addEventListener('click', () => this.zoomReset());
+        
+        // 网格控制
+        document.getElementById('toggleGridBtn').addEventListener('click', () => {
+            this.toggleGrid();
+            const btn = document.getElementById('toggleGridBtn');
+            btn.textContent = this.showGrid ? '显示网格' : '隐藏网格';
+            btn.classList.toggle('active', this.showGrid);
+        });
+        
+        document.getElementById('gridSizeSelect').addEventListener('change', (e) => {
+            this.setGridSize(e.target.value);
+        });
+        
+        // 图层颜色选择
+        document.querySelectorAll('.layer-color-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const color = e.target.dataset.color;
+                this.setLayerColor(color);
+                
+                // 更新按钮状态
+                document.querySelectorAll('.layer-color-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
         
         // 鼠标滚轮缩放
         this.canvas.addEventListener('wheel', (e) => {
@@ -498,20 +537,35 @@ class MagicBrushApp {
                 this.drawPath(this.currentPath);
             } else if (this.currentShape) {
                 this.drawShape(this.currentShape, false, false, true); // isDrawing = true
+                
+                // 如果正在绘制圆形,显示圆心
+                if (this.currentTool === 'circle' && this.currentShape.centerX !== undefined) {
+                    this.drawCircleCenter(this.currentShape.centerX, this.currentShape.centerY);
+                }
             }
         }
         
         this.ctx.restore();
+        
+        // 绘制网格(在缩放变换之外)
+        this.drawGrid();
     }
     
     addLayer(name = null) {
+        // 检查是否达到最大图层数
+        if (this.layers.length >= this.maxLayers) {
+            alert(`已达到最大图层数限制(${this.maxLayers}层)`);
+            return false;
+        }
+        
         const layerName = name || `图层${this.layers.length + 1}`;
         const layer = {
             id: Date.now(),
             name: layerName,
             visible: true,
             locked: false,
-            elements: []
+            elements: [],
+            color: 'transparent' // 新建图层默认透明
         };
         
         this.layers.push(layer);
@@ -521,6 +575,12 @@ class MagicBrushApp {
     }
     
     deleteLayer() {
+        // 保护背景图层(第一个图层)
+        if (this.currentLayerIndex === 0) {
+            alert('背景图层不允许删除');
+            return;
+        }
+        
         if (this.layers.length <= 1) {
             alert('至少需要保留一个图层');
             return;
@@ -1455,6 +1515,68 @@ class MagicBrushApp {
         this.backgroundColor = color;
         this.render();
         this.saveHistory();
+    }
+    
+    // 切换网格显示
+    toggleGrid() {
+        this.showGrid = !this.showGrid;
+        this.render();
+    }
+    
+    // 设置网格大小
+    setGridSize(size) {
+        this.gridSize = Math.max(this.minGridSize, parseInt(size));
+        this.render();
+    }
+    
+    // 绘制网格
+    drawGrid() {
+        if (!this.showGrid) return;
+        
+        const effectiveGridSize = Math.max(this.minGridSize, this.gridSize * this.zoomLevel);
+        
+        this.ctx.save();
+        this.ctx.strokeStyle = '#e0e0e0';
+        this.ctx.lineWidth = 0.5;
+        this.ctx.globalAlpha = 0.5;
+        
+        // 绘制垂直线
+        for (let x = 0; x <= this.canvas.width; x += effectiveGridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, this.canvas.height);
+            this.ctx.stroke();
+        }
+        
+        // 绘制水平线
+        for (let y = 0; y <= this.canvas.height; y += effectiveGridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.stroke();
+        }
+        
+        this.ctx.restore();
+    }
+    
+    // 设置图层颜色
+    setLayerColor(color) {
+        const layer = this.layers[this.currentLayerIndex];
+        if (layer) {
+            layer.color = color;
+            this.render();
+            this.saveHistory();
+        }
+    }
+    
+    // 绘制圆心标记
+    drawCircleCenter(x, y) {
+        this.ctx.save();
+        this.ctx.fillStyle = '#ff0000';
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
     }
 }
 

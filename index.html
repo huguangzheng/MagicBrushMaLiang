@@ -79,6 +79,19 @@
             </div>
             
             <div class="tool-group">
+                <label>网格显示</label>
+                <div class="grid-controls">
+                    <button id="toggleGridBtn" class="active">显示网格</button>
+                    <select id="gridSizeSelect">
+                        <option value="5">5px</option>
+                        <option value="10" selected>10px</option>
+                        <option value="20">20px</option>
+                        <option value="50">50px</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tool-group">
                 <button class="action-btn" id="exportBtn">导出工程</button>
                 <button class="action-btn" id="importBtn">导入工程</button>
             </div>
@@ -120,6 +133,16 @@
                     <button class="bg-color-btn" data-color="#000000" title="黑色" style="background-color: #000000;"></button>
                     <button class="bg-color-btn" data-color="#4a9eff" title="蓝色" style="background-color: #4a9eff;"></button>
                     <button class="bg-color-btn" data-color="transparent" title="透明" style="background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px;"></button>
+                </div>
+            </div>
+            <div class="layer-color-control">
+                <label>当前图层颜色:</label>
+                <div class="layer-colors">
+                    <button class="layer-color-btn" data-color="transparent" title="透明" style="background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px;"></button>
+                    <button class="layer-color-btn" data-color="#ffffff" title="白色" style="background-color: #ffffff;"></button>
+                    <button class="layer-color-btn" data-color="#ffcccc" title="浅红" style="background-color: #ffcccc;"></button>
+                    <button class="layer-color-btn" data-color="#ccffcc" title="浅绿" style="background-color: #ccffcc;"></button>
+                    <button class="layer-color-btn" data-color="#ccccff" title="浅蓝" style="background-color: #ccccff;"></button>
                 </div>
             </div>
             <div id="layerList" class="layer-list">

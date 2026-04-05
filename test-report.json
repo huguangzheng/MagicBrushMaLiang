@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-05T13:31:14.483Z",
+  "timestamp": "2026-04-05T14:30:25.808Z",
   "summary": {
-    "total": 145,
-    "passed": 143,
+    "total": 157,
+    "passed": 155,
     "failed": 2,
-    "successRate": "98.62%"
+    "successRate": "98.73%"
   },
   "details": [
     {
@@ -874,6 +874,78 @@
     {
       "suite": "功能点9: 背景颜色和选择工具",
       "test": "橡皮擦只对当前图层生效",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "应该能够切换网格显示",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "应该能够设置网格大小",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "网格大小不能小于最小值",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "网格应该跟随缩放",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "图层数量不能超过最大限制",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "最大图层数应该为16",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "背景图层不允许删除",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "非背景图层可以删除",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "新建图层默认为透明",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "应该能够设置图层颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "不同图层可以有不同的颜色",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点10: 网格和图层增强",
+      "test": "绘制圆形时应该显示圆心",
       "status": "passed",
       "error": null
     }

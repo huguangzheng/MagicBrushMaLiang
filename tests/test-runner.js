@@ -16,6 +16,7 @@ const Feature6Tests = require('./test-feature6-auto-save-export.js');
 const Feature7Tests = require('./test-feature7-ai-color-optimization.js');
 const Feature8Tests = require('./test-feature8-zoom-and-snap.js');
 const Feature9Tests = require('./test-feature9-background-and-select.js');
+const Feature10Tests = require('./test-feature10-grid-and-layer.js');
 
 class TestRunner {
     constructor() {
@@ -113,16 +114,30 @@ class TestRunner {
             
             // 选择工具相关属性
             selectedElement: null,
+            
+            // 网格相关属性
+            showGrid: true,
+            gridSize: 10,
+            minGridSize: 5,
+            
+            // 图层限制
+            maxLayers: 16,
 
             // 模拟方法
             addLayer: function(name) {
+                // 检查是否达到最大图层数
+                if (this.layers.length >= this.maxLayers) {
+                    return false;
+                }
+                
                 const layerName = name || `图层${this.layers.length + 1}`;
                 const layer = {
                     id: Date.now() + Math.random(), // 确保唯一ID
                     name: layerName,
                     visible: true,
                     locked: false,
-                    elements: []
+                    elements: [],
+                    color: 'transparent' // 新建图层默认透明
                 };
                 this.layers.push(layer);
                 this.currentLayerIndex = this.layers.length - 1;
@@ -130,6 +145,8 @@ class TestRunner {
             },
 
             deleteLayer: function() {
+                // 保护背景图层
+                if (this.currentLayerIndex === 0) return;
                 if (this.layers.length <= 1) return;
                 this.layers.splice(this.currentLayerIndex, 1);
                 this.currentLayerIndex = Math.min(this.currentLayerIndex, this.layers.length - 1);
@@ -448,6 +465,24 @@ class TestRunner {
                         layer.elements.splice(index, 1);
                     }
                 });
+            },
+            
+            // 新增方法 - 切换网格显示
+            toggleGrid: function() {
+                this.showGrid = !this.showGrid;
+            },
+            
+            // 新增方法 - 设置网格大小
+            setGridSize: function(size) {
+                this.gridSize = Math.max(this.minGridSize, parseInt(size));
+            },
+            
+            // 新增方法 - 设置图层颜色
+            setLayerColor: function(color) {
+                const layer = this.layers[this.currentLayerIndex];
+                if (layer) {
+                    layer.color = color;
+                }
             }
         };
     }
@@ -491,6 +526,9 @@ class TestRunner {
 
         const feature9Tests = new Feature9Tests(this.framework, this.app);
         feature9Tests.registerTests();
+
+        const feature10Tests = new Feature10Tests(this.framework, this.app);
+        feature10Tests.registerTests();
 
         this.testSuites = this.framework.getSuiteNames();
 
