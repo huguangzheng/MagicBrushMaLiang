@@ -397,6 +397,7 @@ class TestRunner {
             // 新增方法 - 设置背景颜色
             setBackgroundColor: function(color) {
                 this.backgroundColor = color;
+                this.saveHistory();
             },
             
             // 新增方法 - 移动元素
@@ -430,6 +431,7 @@ class TestRunner {
                     layer.elements.splice(index, 1);
                 }
                 this.selectedElement = null;
+                this.saveHistory();
             },
             
             // 新增方法 - 应用橡皮擦

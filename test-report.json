@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-04-05T14:30:25.808Z",
+  "timestamp": "2026-04-05T14:58:49.451Z",
   "summary": {
     "total": 157,
-    "passed": 155,
-    "failed": 2,
-    "successRate": "98.73%"
+    "passed": 157,
+    "failed": 0,
+    "successRate": "100.00%"
   },
   "details": [
     {
@@ -808,8 +808,8 @@
     {
       "suite": "功能点9: 背景颜色和选择工具",
       "test": "设置背景颜色应该保存历史",
-      "status": "failed",
-      "error": "Expected 3 but got 2. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点9: 背景颜色和选择工具",
@@ -856,8 +856,8 @@
     {
       "suite": "功能点9: 背景颜色和选择工具",
       "test": "删除元素应该保存历史",
-      "status": "failed",
-      "error": "Expected 3 but got 2. "
+      "status": "passed",
+      "error": null
     },
     {
       "suite": "功能点9: 背景颜色和选择工具",
