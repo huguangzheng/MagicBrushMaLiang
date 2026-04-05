@@ -47,14 +47,22 @@ class MagicBrushApp {
         
         // 图层限制
         this.maxLayers = 16; // 最大图层数
-        
+
+        // 标尺相关属性
+        this.showRuler = true;
+        this.rulerSize = 20;
+        this.rulerXCanvas = null;
+        this.rulerYCanvas = null;
+        this.rulerXCtx = null;
+        this.rulerYCtx = null;
+
         this.init();
     }
     
     init() {
         this.setupCanvas();
         this.setupEventListeners();
-        this.addLayer('背景层');
+        this.initRulers();
         this.addLayer('图层1');
         this.startAutoSave();
         this.updateBrushPreview();
@@ -65,17 +73,10 @@ class MagicBrushApp {
         const container = document.querySelector('.canvas-container');
         const width = container.clientWidth - 40;
         const height = container.clientHeight - 40;
-        
+
         this.canvas.width = width;
         this.canvas.height = height;
-        
-        // 初始化背景图层
-        if (this.layers.length === 0) {
-            this.addLayer('背景图层');
-            // 设置背景图层颜色为白色
-            this.layers[0].color = '#ffffff';
-        }
-        
+
         // 设置白色背景
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fillRect(0, 0, width, height);
@@ -126,6 +127,10 @@ class MagicBrushApp {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportProject());
         document.getElementById('importBtn').addEventListener('click', () => this.importProject());
         document.getElementById('aiColorBtn').addEventListener('click', () => this.aiOptimizeColors());
+
+        // 导出图片事件
+        document.getElementById('exportPNGBtn').addEventListener('click', () => this.exportPNG());
+        document.getElementById('exportJPGBtn').addEventListener('click', () => this.exportJPG());
         
         // 图层管理事件
         document.getElementById('addLayerBtn').addEventListener('click', () => this.addLayer());
@@ -137,19 +142,19 @@ class MagicBrushApp {
         document.querySelectorAll('.bg-color-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const color = e.target.dataset.color;
-                this.setBackgroundColor(color);
-                
+                this.setLayerColor(color);
+
                 // 更新按钮状态
                 document.querySelectorAll('.bg-color-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
         });
-        
+
         // 缩放控制事件
         document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
         document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
         document.getElementById('zoomResetBtn').addEventListener('click', () => this.zoomReset());
-        
+
         // 网格控制
         document.getElementById('toggleGridBtn').addEventListener('click', () => {
             this.toggleGrid();
@@ -157,21 +162,9 @@ class MagicBrushApp {
             btn.textContent = this.showGrid ? '显示网格' : '隐藏网格';
             btn.classList.toggle('active', this.showGrid);
         });
-        
+
         document.getElementById('gridSizeSelect').addEventListener('change', (e) => {
             this.setGridSize(e.target.value);
-        });
-        
-        // 图层颜色选择
-        document.querySelectorAll('.layer-color-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const color = e.target.dataset.color;
-                this.setLayerColor(color);
-                
-                // 更新按钮状态
-                document.querySelectorAll('.layer-color-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
         });
         
         // 鼠标滚轮缩放（以指针下的画布点为锚点）
@@ -525,20 +518,45 @@ class MagicBrushApp {
             ctx.globalAlpha = 1;
         }
     }
-    
-    render() {
-        // 清空画布并填充背景颜色
-        if (this.backgroundColor === 'transparent') {
-            // 透明背景 - 绘制棋盘格
-            const gridSize = 10;
-            for (let x = 0; x < this.canvas.width; x += gridSize) {
-                for (let y = 0; y < this.canvas.height; y += gridSize) {
-                    this.ctx.fillStyle = ((x / gridSize + y / gridSize) % 2 === 0) ? '#ffffff' : '#cccccc';
-                    this.ctx.fillRect(x, y, gridSize, gridSize);
-                }
+
+    // 计算叠加背景颜色
+    calculateCompositeBackgroundColor() {
+        // 从上到下遍历图层
+        for (let i = this.layers.length - 1; i >= 0; i--) {
+            const layer = this.layers[i];
+            if (!layer.visible) continue;
+
+            if (layer.color && layer.color !== 'transparent') {
+                return layer.color;
             }
+        }
+        return '#ffffff';
+    }
+
+    // 绘制棋盘格背景
+    drawCheckerboard() {
+        const size = 10;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        for (let x = 0; x < w; x += size) {
+            for (let y = 0; y < h; y += size) {
+                this.ctx.fillStyle = ((x / size + y / size) % 2 === 0) ? '#ffffff' : '#cccccc';
+                this.ctx.fillRect(x, y, size, size);
+            }
+        }
+    }
+
+    render() {
+        // 计算叠加背景颜色
+        const compositeColor = this.calculateCompositeBackgroundColor();
+
+        // 清空画布并填充背景颜色
+        if (compositeColor === 'transparent') {
+            // 透明背景 - 绘制棋盘格
+            this.drawCheckerboard();
         } else {
-            this.ctx.fillStyle = this.backgroundColor;
+            this.ctx.fillStyle = compositeColor;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         
@@ -588,8 +606,11 @@ class MagicBrushApp {
         }
 
         this.drawGridWorld();
-        
+
         this.ctx.restore();
+
+        // 更新标尺
+        this.updateRulers();
     }
     
     addLayer(name = null) {
@@ -606,7 +627,7 @@ class MagicBrushApp {
             visible: true,
             locked: false,
             elements: [],
-            color: 'transparent' // 新建图层默认透明
+            color: '#ffffff' // 新建图层默认白色
         };
         
         this.layers.push(layer);
@@ -1481,29 +1502,34 @@ class MagicBrushApp {
     
     // 应用橡皮擦(删除路径上的元素)
     applyEraser(eraserPath) {
-        if (!eraserPath || !eraserPath.points || eraserPath.points.length < 2) return;
-        
+        if (!eraserPath || !eraserPath.points || eraserPath.points.length < 1) return;
+
         const layer = this.layers[this.currentLayerIndex];
         if (!layer) return;
-        
+
         const eraserSize = eraserPath.size;
+        const halfSize = eraserSize / 2;  // 使用半径进行检测
         const elementsToRemove = [];
-        
+
         // 检查橡皮擦路径是否与元素相交
         layer.elements.forEach(element => {
+            let shouldRemove = false;
+
             if (element.type === 'brush' || element.type === 'eraser') {
                 // 检查线条点是否在橡皮擦路径上
                 for (const eraserPoint of eraserPath.points) {
                     for (const elementPoint of element.points) {
                         const distance = Math.sqrt(
-                            Math.pow(eraserPoint.x - elementPoint.x, 2) + 
+                            Math.pow(eraserPoint.x - elementPoint.x, 2) +
                             Math.pow(eraserPoint.y - elementPoint.y, 2)
                         );
-                        if (distance < eraserSize) {
-                            elementsToRemove.push(element);
-                            return;
+                        // 修复：使用halfSize而非eraserSize
+                        if (distance <= halfSize) {
+                            shouldRemove = true;
+                            break;
                         }
                     }
+                    if (shouldRemove) break;
                 }
             } else if (element.type === 'line') {
                 // 检查直线是否与橡皮擦路径相交
@@ -1513,14 +1539,21 @@ class MagicBrushApp {
                         element.startX, element.startY,
                         element.endX, element.endY
                     );
-                    if (d < eraserSize) {
-                        elementsToRemove.push(element);
+                    if (d <= halfSize) {
+                        shouldRemove = true;
                         break;
                     }
                 }
+            } else if (element.type === 'circle' || element.type === 'rect') {
+                // 闭合图形：检查擦除路径是否与图形相交
+                shouldRemove = this.isShapeIntersectEraser(element, eraserPath, halfSize);
+            }
+
+            if (shouldRemove) {
+                elementsToRemove.push(element);
             }
         });
-        
+
         // 删除相交的元素
         elementsToRemove.forEach(element => {
             const index = layer.elements.indexOf(element);
@@ -1529,14 +1562,37 @@ class MagicBrushApp {
             }
         });
     }
-    
-    // 设置背景颜色
-    setBackgroundColor(color) {
-        this.backgroundColor = color;
-        this.render();
-        this.saveHistory();
+
+    // 检查闭合图形是否与擦除路径相交
+    isShapeIntersectEraser(shape, eraserPath, halfSize) {
+        for (const eraserPoint of eraserPath.points) {
+            if (shape.type === 'circle') {
+                const distance = Math.sqrt(
+                    Math.pow(eraserPoint.x - shape.centerX, 2) +
+                    Math.pow(eraserPoint.y - shape.centerY, 2)
+                );
+                // 检查是否在圆的边界附近或内部
+                if (Math.abs(distance - shape.radius) <= halfSize || distance <= shape.radius) {
+                    return true;
+                }
+            } else if (shape.type === 'rect') {
+                // 检查是否在矩形边界附近或内部
+                const { startX, startY, width, height } = shape;
+                const x1 = Math.min(startX, startX + width);
+                const x2 = Math.max(startX, startX + width);
+                const y1 = Math.min(startY, startY + height);
+                const y2 = Math.max(startY, startY + height);
+
+                // 检查点是否在矩形内部或边界附近
+                if (eraserPoint.x >= x1 - halfSize && eraserPoint.x <= x2 + halfSize &&
+                    eraserPoint.y >= y1 - halfSize && eraserPoint.y <= y2 + halfSize) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
-    
+
     // 切换网格显示
     toggleGrid() {
         this.showGrid = !this.showGrid;
@@ -1595,7 +1651,248 @@ class MagicBrushApp {
             layer.color = color;
             this.render();
             this.saveHistory();
+            this.updateLayerPreviews();
         }
+    }
+
+    // 初始化标尺
+    initRulers() {
+        this.rulerXCanvas = document.getElementById('rulerXCanvas');
+        this.rulerYCanvas = document.getElementById('rulerYCanvas');
+
+        if (this.rulerXCanvas) {
+            this.rulerXCtx = this.rulerXCanvas.getContext('2d');
+        }
+        if (this.rulerYCanvas) {
+            this.rulerYCtx = this.rulerYCanvas.getContext('2d');
+        }
+
+        this.updateRulerSize();
+        this.renderRulers();
+    }
+
+    // 更新标尺尺寸
+    updateRulerSize() {
+        if (this.rulerXCanvas) {
+            this.rulerXCanvas.width = this.canvas.width;
+            this.rulerXCanvas.height = this.rulerSize;
+        }
+        if (this.rulerYCanvas) {
+            this.rulerYCanvas.width = this.rulerSize;
+            this.rulerYCanvas.height = this.canvas.height;
+        }
+    }
+
+    // 渲染标尺
+    renderRulers() {
+        if (!this.showRuler) return;
+
+        this.renderXRuler();
+        this.renderYRuler();
+    }
+
+    // 渲染X轴标尺
+    renderXRuler() {
+        if (!this.rulerXCtx) return;
+
+        const ctx = this.rulerXCtx;
+        const w = this.rulerXCanvas.width;
+        const h = this.rulerXCanvas.height;
+        const z = this.zoomLevel;
+        const px = this.viewPanX;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(0, 0, w, h);
+
+        // 计算刻度间隔
+        let majorInterval = 50;
+        let minorInterval = 10;
+        if (z < 0.5) { majorInterval = 100; minorInterval = 20; }
+        else if (z > 2) { majorInterval = 20; minorInterval = 5; }
+
+        const startWorld = -px / z;
+        const endWorld = (w - px) / z;
+
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 0.5;
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = '#333';
+
+        // 绘制刻度
+        const startX = Math.floor(startWorld / minorInterval) * minorInterval;
+        for (let x = startX; x <= endWorld; x += minorInterval) {
+            const screenX = x * z + px;
+            const isMajor = x % majorInterval === 0;
+
+            ctx.beginPath();
+            ctx.moveTo(screenX, isMajor ? 0 : h * 0.6);
+            ctx.lineTo(screenX, h);
+            ctx.stroke();
+
+            if (isMajor && Math.abs(x) >= 0.001) {
+                ctx.fillText(Math.round(x), screenX + 2, h - 3);
+            }
+        }
+    }
+
+    // 渲染Y轴标尺
+    renderYRuler() {
+        if (!this.rulerYCtx) return;
+
+        const ctx = this.rulerYCtx;
+        const w = this.rulerYCanvas.width;
+        const h = this.rulerYCanvas.height;
+        const z = this.zoomLevel;
+        const py = this.viewPanY;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(0, 0, w, h);
+
+        // 计算刻度间隔
+        let majorInterval = 50;
+        let minorInterval = 10;
+        if (z < 0.5) { majorInterval = 100; minorInterval = 20; }
+        else if (z > 2) { majorInterval = 20; minorInterval = 5; }
+
+        const startWorld = -py / z;
+        const endWorld = (h - py) / z;
+
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 0.5;
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = '#333';
+
+        // 绘制刻度
+        const startY = Math.floor(startWorld / minorInterval) * minorInterval;
+        for (let y = startY; y <= endWorld; y += minorInterval) {
+            const screenY = y * z + py;
+            const isMajor = y % majorInterval === 0;
+
+            ctx.beginPath();
+            ctx.moveTo(isMajor ? 0 : w * 0.6, screenY);
+            ctx.lineTo(w, screenY);
+            ctx.stroke();
+
+            if (isMajor && Math.abs(y) >= 0.001) {
+                ctx.save();
+                ctx.translate(w - 3, screenY + 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText(Math.round(y), 0, 0);
+                ctx.restore();
+            }
+        }
+    }
+
+    // 更新标尺
+    updateRulers() {
+        this.renderRulers();
+    }
+
+    // 切换标尺显示
+    toggleRuler() {
+        this.showRuler = !this.showRuler;
+        document.getElementById('rulerX').style.display = this.showRuler ? 'block' : 'none';
+        document.getElementById('rulerY').style.display = this.showRuler ? 'block' : 'none';
+        this.render();
+    }
+
+    // 导出PNG
+    exportPNG() {
+        const dataUrl = this.generateExportDataURL('image/png');
+        this.downloadImage(dataUrl, this.generateExportFileName('png'));
+    }
+
+    // 导出JPG
+    exportJPG() {
+        const dataUrl = this.generateExportDataURL('image/jpeg', 0.92);
+        this.downloadImage(dataUrl, this.generateExportFileName('jpg'));
+    }
+
+    // 生成导出数据URL
+    generateExportDataURL(mimeType, quality = 0.92) {
+        // 创建临时canvas
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.canvas.width;
+        tempCanvas.height = this.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // 对于JPG，先填充白色背景
+        if (mimeType === 'image/jpeg') {
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        }
+
+        // 渲染所有可见图层
+        this.layers.forEach(layer => {
+            if (!layer.visible) return;
+
+            // 渲染图层背景
+            if (layer.color && layer.color !== 'transparent') {
+                tempCtx.fillStyle = layer.color;
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            }
+
+            // 渲染图层元素
+            layer.elements.forEach(element => {
+                this.renderElementToContext(tempCtx, element);
+            });
+        });
+
+        return tempCanvas.toDataURL(mimeType, quality);
+    }
+
+    // 渲染元素到上下文
+    renderElementToContext(ctx, element) {
+        ctx.strokeStyle = element.color;
+        ctx.lineWidth = element.size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (element.type === 'brush' || element.type === 'eraser') {
+            ctx.beginPath();
+            if (element.points.length > 0) {
+                ctx.moveTo(element.points[0].x, element.points[0].y);
+                for (let i = 1; i < element.points.length; i++) {
+                    ctx.lineTo(element.points[i].x, element.points[i].y);
+                }
+            }
+            ctx.stroke();
+        } else if (element.type === 'line') {
+            ctx.beginPath();
+            ctx.moveTo(element.startX, element.startY);
+            ctx.lineTo(element.endX, element.endY);
+            ctx.stroke();
+        } else if (element.type === 'rect') {
+            ctx.strokeRect(element.startX, element.startY, element.width, element.height);
+        } else if (element.type === 'circle') {
+            ctx.beginPath();
+            ctx.arc(element.centerX, element.centerY, element.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    // 生成导出文件名
+    generateExportFileName(extension) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `MagicBrush_${year}${month}${day}_${hours}${minutes}${seconds}.${extension}`;
+    }
+
+    // 下载图片
+    downloadImage(dataUrl, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
     
     // 绘制圆心标记
