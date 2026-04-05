@@ -264,30 +264,61 @@ class TestRunner {
                 // 模拟方法
             },
             
-            // 新增方法 - 改进的线条选择
+            // 新增方法 - 改进的线条选择(检查所有图层)
             enhanceLineSelection: function(x, y) {
-                const threshold = 10;
-                let selectedLine = null;
+                const threshold = this.snapThreshold || 15;
+                let selectedElement = null;
                 let minDistance = threshold;
                 
-                for (let i = this.currentLayerIndex; i < this.layers.length; i++) {
+                // 检查所有图层(从上到下)
+                for (let i = this.layers.length - 1; i >= 0; i--) {
                     const layer = this.layers[i];
                     if (!layer.visible) continue;
                     
                     for (const element of layer.elements) {
+                        // 处理画笔/橡皮擦绘制的线条
                         if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
                             for (const point of element.points) {
-                                const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                                if (distance < minDistance) {
-                                    minDistance = distance;
-                                    selectedLine = element;
+                                const d = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                                if (d < minDistance) {
+                                    minDistance = d;
+                                    selectedElement = element;
                                 }
+                            }
+                        }
+                        // 处理直线
+                        else if (element.type === 'line') {
+                            const d = this.pointToLineDistance ? 
+                                this.pointToLineDistance(x, y, element.startX, element.startY, element.endX, element.endY) :
+                                Math.sqrt(Math.pow((element.startX + element.endX)/2 - x, 2) + Math.pow((element.startY + element.endY)/2 - y, 2));
+                            if (d < minDistance) {
+                                minDistance = d;
+                                selectedElement = element;
+                            }
+                        }
+                        // 处理矩形
+                        else if (element.type === 'rect') {
+                            // 简化处理:检查矩形的四条边
+                            const cx = element.startX + element.width / 2;
+                            const cy = element.startY + element.height / 2;
+                            const d = Math.sqrt(Math.pow(cx - x, 2) + Math.pow(cy - y, 2));
+                            if (d < minDistance) {
+                                minDistance = d;
+                                selectedElement = element;
+                            }
+                        }
+                        // 处理圆形
+                        else if (element.type === 'circle') {
+                            const d = Math.abs(Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2)) - element.radius);
+                            if (d < minDistance) {
+                                minDistance = d;
+                                selectedElement = element;
                             }
                         }
                     }
                 }
                 
-                return selectedLine;
+                return selectedElement;
             },
             
             // 新增方法 - 更新画笔预览

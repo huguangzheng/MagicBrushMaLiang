@@ -148,37 +148,48 @@ class Feature8Tests {
      */
     testAllLayersSelection() {
         this.framework.it('应该能够选择所有图层的线条', async () => {
-            // 清空并创建多个图层
+            // 完全重置状态
             this.app.layers = [];
             this.app.currentLayerIndex = 0;
+            this.app.hoveredLine = null;
+            this.app.selectedLine = null;
+            
+            // 创建多个图层
             this.app.addLayer('图层1');
             this.app.addLayer('图层2');
             
-            // 在不同图层添加线条
+            // 确保图层创建成功
+            this.framework.assertEqual(this.app.layers.length, 2);
+            
+            // 在不同图层添加线条(使用更多点)
             const line1 = {
                 type: 'brush',
                 color: '#ff0000',
                 size: 5,
-                points: [{x: 50, y: 50}, {x: 51, y: 50}]
+                points: [{x: 50, y: 50}, {x: 51, y: 50}, {x: 52, y: 50}]
             };
             
             const line2 = {
                 type: 'brush',
                 color: '#00ff00',
                 size: 5,
-                points: [{x: 150, y: 50}, {x: 151, y: 50}]
+                points: [{x: 150, y: 50}, {x: 151, y: 50}, {x: 152, y: 50}]
             };
             
             this.app.layers[0].elements.push(line1);
             this.app.layers[1].elements.push(line2);
             
+            // 确保元素添加成功
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+            this.framework.assertEqual(this.app.layers[1].elements.length, 1);
+            
             // 检测第一个图层的线条
-            const detected1 = this.app.enhanceLineSelection(50, 50);
-            this.framework.assertNotNull(detected1);
+            const detected1 = this.app.enhanceLineSelection(51, 50);
+            this.framework.assertNotNull(detected1, '应该检测到第一个图层的线条');
             
             // 检测第二个图层的线条
-            const detected2 = this.app.enhanceLineSelection(150, 50);
-            this.framework.assertNotNull(detected2);
+            const detected2 = this.app.enhanceLineSelection(151, 50);
+            this.framework.assertNotNull(detected2, '应该检测到第二个图层的线条');
         });
 
         this.framework.it('上层图层的线条应该优先被选择', async () => {
