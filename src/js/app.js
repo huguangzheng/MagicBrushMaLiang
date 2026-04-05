@@ -55,6 +55,8 @@ class MagicBrushApp {
         this.rulerYCanvas = null;
         this.rulerXCtx = null;
         this.rulerYCtx = null;
+        this.mouseX = 0; // 鼠标在画布上的X坐标
+        this.mouseY = 0; // 鼠标在画布上的Y坐标
 
         this.init();
     }
@@ -63,7 +65,7 @@ class MagicBrushApp {
         this.setupCanvas();
         this.setupEventListeners();
         this.initRulers();
-        this.addLayer('图层1');
+        this.addLayer('背景图层');
         this.startAutoSave();
         this.updateBrushPreview();
         this.render();
@@ -238,9 +240,11 @@ class MagicBrushApp {
                 this.isDraggingElement = true;
                 this.dragOffsetX = x;
                 this.dragOffsetY = y;
+                this.canvas.style.cursor = 'grab'; // 改变鼠标为抓手形状
                 this.render();
             } else {
                 this.selectedElement = null;
+                this.canvas.style.cursor = 'default'; // 恢复默认鼠标
                 this.render();
             }
             return;
@@ -316,9 +320,15 @@ class MagicBrushApp {
     
     handleMouseMove(e) {
         const { x, y } = this.eventToWorld(e);
-        
+
+        // 更新鼠标位置（用于标尺滑块）
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+
         // 选择工具拖动元素
         if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
+            this.canvas.style.cursor = 'grabbing'; // 改变鼠标为抓取形状
             const dx = x - this.dragOffsetX;
             const dy = y - this.dragOffsetY;
             this.moveElement(this.selectedElement, dx, dy);
@@ -372,6 +382,7 @@ class MagicBrushApp {
         if (this.currentTool === 'select') {
             if (this.isDraggingElement) {
                 this.isDraggingElement = false;
+                this.canvas.style.cursor = 'default'; // 恢复默认鼠标
                 this.saveHistory();
             }
             return;
@@ -607,6 +618,9 @@ class MagicBrushApp {
 
         this.drawGridWorld();
 
+        // 绘制鼠标位置的正交虚线
+        this.drawMouseCrosshair();
+
         this.ctx.restore();
 
         // 更新标尺
@@ -627,7 +641,7 @@ class MagicBrushApp {
             visible: true,
             locked: false,
             elements: [],
-            color: '#ffffff' // 新建图层默认白色
+            color: this.layers.length === 0 ? '#ffffff' : 'transparent' // 背景图层白色，其他图层透明
         };
         
         this.layers.push(layer);
@@ -656,20 +670,26 @@ class MagicBrushApp {
     }
     
     moveLayerUp() {
+        // 背景图层(第一个图层)不允许上移
+        if (this.currentLayerIndex === 0) {
+            alert('背景图层不允许上移');
+            return;
+        }
         if (this.currentLayerIndex >= this.layers.length - 1) return;
-        
+
         const temp = this.layers[this.currentLayerIndex];
         this.layers[this.currentLayerIndex] = this.layers[this.currentLayerIndex + 1];
         this.layers[this.currentLayerIndex + 1] = temp;
         this.currentLayerIndex++;
-        
+
         this.updateLayerList();
         this.render();
         this.saveHistory();
     }
-    
+
     moveLayerDown() {
-        if (this.currentLayerIndex <= 0) return;
+        // 不能将其他图层移到背景图层位置
+        if (this.currentLayerIndex <= 1) return;
         
         const temp = this.layers[this.currentLayerIndex];
         this.layers[this.currentLayerIndex] = this.layers[this.currentLayerIndex - 1];
@@ -695,41 +715,50 @@ class MagicBrushApp {
     updateLayerList() {
         const layerList = document.getElementById('layerList');
         layerList.innerHTML = '';
-        
+
         // 反向显示图层，让上面的图层在列表中显示在上方
         for (let i = this.layers.length - 1; i >= 0; i--) {
             const layer = this.layers[i];
             const layerItem = document.createElement('div');
             layerItem.className = `layer-item ${i === this.currentLayerIndex ? 'active' : ''}`;
-            
+
+            // 显示图层颜色
+            const colorDisplay = layer.color === 'transparent' ? '透明' : layer.color;
+            const colorStyle = layer.color === 'transparent'
+                ? 'background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px;'
+                : `background-color: ${layer.color};`;
+
             layerItem.innerHTML = `
                 <div class="layer-preview">
                     <canvas id="layerPreview${layer.id}" width="40" height="40"></canvas>
                 </div>
                 <div class="layer-info">
-                    <div class="layer-name" data-layer-index="${i}" title="点击选择，双击重命名">${layer.name}</div>
+                    <div class="layer-name" data-layer-index="${i}" title="点击选择${i === 0 ? '' : '，双击重命名'}">${layer.name}</div>
+                    <div class="layer-color-indicator" style="width: 16px; height: 16px; display: inline-block; border: 1px solid #ccc; ${colorStyle}" title="${colorDisplay}"></div>
                 </div>
                 <div class="layer-actions">
                     <button onclick="app.toggleLayerVisibility(${i})">${layer.visible ? '👁️' : '👁️‍🗨️'}</button>
                 </div>
             `;
-            
+
             layerItem.addEventListener('click', (e) => {
                 if (!e.target.closest('.layer-actions')) {
                     this.selectLayer(i);
                 }
             });
-            
-            // 添加双击重命名功能
-            const layerName = layerItem.querySelector('.layer-name');
-            layerName.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                this.editLayerName(i);
-            });
-            
+
+            // 添加双击重命名功能（背景图层除外）
+            if (i !== 0) {
+                const layerName = layerItem.querySelector('.layer-name');
+                layerName.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    this.editLayerName(i);
+                });
+            }
+
             layerList.appendChild(layerItem);
         }
-        
+
         this.updateLayerPreviews();
     }
     
@@ -1655,6 +1684,31 @@ class MagicBrushApp {
         }
     }
 
+    // 绘制鼠标位置的正交虚线
+    drawMouseCrosshair() {
+        if (this.mouseX === 0 && this.mouseY === 0) return;
+
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#4a9eff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+
+        // 绘制垂直线
+        ctx.beginPath();
+        ctx.moveTo(this.mouseX, 0);
+        ctx.lineTo(this.mouseX, this.canvas.height);
+        ctx.stroke();
+
+        // 绘制水平线
+        ctx.beginPath();
+        ctx.moveTo(0, this.mouseY);
+        ctx.lineTo(this.canvas.width, this.mouseY);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
     // 初始化标尺
     initRulers() {
         this.rulerXCanvas = document.getElementById('rulerXCanvas');
@@ -1705,14 +1759,18 @@ class MagicBrushApp {
         ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(0, 0, w, h);
 
+        // 计算画布中心作为原点
+        const canvasCenterX = this.canvas.width / 2;
+        const originOffset = canvasCenterX * z + px;
+
         // 计算刻度间隔
         let majorInterval = 50;
         let minorInterval = 10;
         if (z < 0.5) { majorInterval = 100; minorInterval = 20; }
         else if (z > 2) { majorInterval = 20; minorInterval = 5; }
 
-        const startWorld = -px / z;
-        const endWorld = (w - px) / z;
+        const startWorld = -px / z - canvasCenterX;
+        const endWorld = (w - px) / z - canvasCenterX;
 
         ctx.strokeStyle = '#999';
         ctx.lineWidth = 0.5;
@@ -1722,7 +1780,7 @@ class MagicBrushApp {
         // 绘制刻度
         const startX = Math.floor(startWorld / minorInterval) * minorInterval;
         for (let x = startX; x <= endWorld; x += minorInterval) {
-            const screenX = x * z + px;
+            const screenX = (x + canvasCenterX) * z + px;
             const isMajor = x % majorInterval === 0;
 
             ctx.beginPath();
@@ -1733,6 +1791,21 @@ class MagicBrushApp {
             if (isMajor && Math.abs(x) >= 0.001) {
                 ctx.fillText(Math.round(x), screenX + 2, h - 3);
             }
+        }
+
+        // 绘制原点标记
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(originOffset - 1, 0, 2, h);
+
+        // 绘制鼠标位置滑块
+        if (this.mouseX !== 0) {
+            ctx.fillStyle = '#4a9eff';
+            ctx.beginPath();
+            ctx.moveTo(this.mouseX, 0);
+            ctx.lineTo(this.mouseX - 4, 8);
+            ctx.lineTo(this.mouseX + 4, 8);
+            ctx.closePath();
+            ctx.fill();
         }
     }
 
@@ -1750,14 +1823,18 @@ class MagicBrushApp {
         ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(0, 0, w, h);
 
+        // 计算画布中心作为原点
+        const canvasCenterY = this.canvas.height / 2;
+        const originOffset = canvasCenterY * z + py;
+
         // 计算刻度间隔
         let majorInterval = 50;
         let minorInterval = 10;
         if (z < 0.5) { majorInterval = 100; minorInterval = 20; }
         else if (z > 2) { majorInterval = 20; minorInterval = 5; }
 
-        const startWorld = -py / z;
-        const endWorld = (h - py) / z;
+        const startWorld = -py / z - canvasCenterY;
+        const endWorld = (h - py) / z - canvasCenterY;
 
         ctx.strokeStyle = '#999';
         ctx.lineWidth = 0.5;
@@ -1767,7 +1844,7 @@ class MagicBrushApp {
         // 绘制刻度
         const startY = Math.floor(startWorld / minorInterval) * minorInterval;
         for (let y = startY; y <= endWorld; y += minorInterval) {
-            const screenY = y * z + py;
+            const screenY = (y + canvasCenterY) * z + py;
             const isMajor = y % majorInterval === 0;
 
             ctx.beginPath();
@@ -1782,6 +1859,21 @@ class MagicBrushApp {
                 ctx.fillText(Math.round(y), 0, 0);
                 ctx.restore();
             }
+        }
+
+        // 绘制原点标记
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(0, originOffset - 1, w, 2);
+
+        // 绘制鼠标位置滑块
+        if (this.mouseY !== 0) {
+            ctx.fillStyle = '#4a9eff';
+            ctx.beginPath();
+            ctx.moveTo(0, this.mouseY);
+            ctx.lineTo(8, this.mouseY - 4);
+            ctx.lineTo(8, this.mouseY + 4);
+            ctx.closePath();
+            ctx.fill();
         }
     }
 
