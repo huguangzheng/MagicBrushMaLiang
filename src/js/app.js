@@ -105,7 +105,6 @@ class MagicBrushApp {
         // 图层管理事件
         document.getElementById('addLayerBtn').addEventListener('click', () => this.addLayer());
         document.getElementById('deleteLayerBtn').addEventListener('click', () => this.deleteLayer());
-        document.getElementById('renameLayerBtn').addEventListener('click', () => this.renameLayer());
         document.getElementById('moveLayerUpBtn').addEventListener('click', () => this.moveLayerUp());
         document.getElementById('moveLayerDownBtn').addEventListener('click', () => this.moveLayerDown());
         
@@ -136,9 +135,21 @@ class MagicBrushApp {
         const x = (e.clientX - rect.left) / this.zoomLevel;
         const y = (e.clientY - rect.top) / this.zoomLevel;
         
+        // 如果是橡皮擦,检查是否点击了闭合图形
+        if (this.currentTool === 'eraser') {
+            const clickedElement = this.findElementAtPosition(x, y);
+            if (clickedElement && (clickedElement.type === 'circle' || clickedElement.type === 'rect')) {
+                // 删除整个闭合图形
+                this.removeElement(clickedElement);
+                this.saveHistory();
+                this.render();
+                return;
+            }
+        }
+        
         // 首先检查是否点击了现有线条进行编辑(检查所有图层)
         const clickedLine = this.enhanceLineSelection(x, y);
-        if (clickedLine) {
+        if (clickedLine && this.currentTool !== 'eraser') {
             this.selectedLine = clickedLine;
             this.editingLine = clickedLine;
             this.editMode = true;
@@ -217,23 +228,20 @@ class MagicBrushApp {
         
         if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
             this.currentPath.points.push({x, y});
-            this.drawPath(this.currentPath);
+            this.render(); // 重新渲染整个画布
         } else if (this.currentTool === 'line') {
             this.currentShape.endX = x;
             this.currentShape.endY = y;
             this.render();
-            this.drawShape(this.currentShape);
         } else if (this.currentTool === 'rect') {
             this.currentShape.width = x - this.currentShape.startX;
             this.currentShape.height = y - this.currentShape.startY;
             this.render();
-            this.drawShape(this.currentShape);
         } else if (this.currentTool === 'circle') {
             const dx = x - this.currentShape.centerX;
             const dy = y - this.currentShape.centerY;
             this.currentShape.radius = Math.sqrt(dx * dx + dy * dy);
             this.render();
-            this.drawShape(this.currentShape);
         }
         
         this.lastX = x;
@@ -310,12 +318,33 @@ class MagicBrushApp {
         ctx.closePath();
     }
     
-    drawShape(shape) {
+    drawShape(shape, isHovered = false, isSelected = false, isDrawing = false) {
         const ctx = this.ctx;
+        
+        // 如果是选中或悬停状态,先绘制高亮效果
+        if (isSelected || isHovered) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#4a9eff';
+            ctx.lineWidth = shape.size + 4;
+            ctx.globalAlpha = 0.3;
+            
+            if (shape.type === 'line') {
+                ctx.moveTo(shape.startX, shape.startY);
+                ctx.lineTo(shape.endX, shape.endY);
+            } else if (shape.type === 'rect') {
+                ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
+            } else if (shape.type === 'circle') {
+                ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+            }
+            
+            ctx.stroke();
+            ctx.closePath();
+            ctx.globalAlpha = 1;
+        }
         
         ctx.beginPath();
         ctx.strokeStyle = shape.color;
-        ctx.lineWidth = shape.size;
+        ctx.lineWidth = isSelected ? shape.size + 2 : shape.size;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -330,6 +359,33 @@ class MagicBrushApp {
         
         ctx.stroke();
         ctx.closePath();
+        
+        // 绘制时显示尺寸信息
+        if (isDrawing) {
+            ctx.fillStyle = '#4a9eff';
+            ctx.font = '12px Arial';
+            ctx.globalAlpha = 0.8;
+            
+            if (shape.type === 'line') {
+                const length = Math.sqrt(
+                    Math.pow(shape.endX - shape.startX, 2) + 
+                    Math.pow(shape.endY - shape.startY, 2)
+                );
+                const midX = (shape.startX + shape.endX) / 2;
+                const midY = (shape.startY + shape.endY) / 2;
+                ctx.fillText(`长度: ${length.toFixed(1)}`, midX + 10, midY - 10);
+            } else if (shape.type === 'rect') {
+                const width = Math.abs(shape.width);
+                const height = Math.abs(shape.height);
+                ctx.fillText(`宽: ${width.toFixed(1)}, 高: ${height.toFixed(1)}`, 
+                    shape.startX + 10, shape.startY - 10);
+            } else if (shape.type === 'circle') {
+                ctx.fillText(`半径: ${shape.radius.toFixed(1)}`, 
+                    shape.centerX + shape.radius + 10, shape.centerY);
+            }
+            
+            ctx.globalAlpha = 1;
+        }
     }
     
     render() {
@@ -357,6 +413,15 @@ class MagicBrushApp {
                 }
             });
         });
+        
+        // 绘制当前正在绘制的形状
+        if (this.isDrawing) {
+            if (this.currentPath && (this.currentTool === 'brush' || this.currentTool === 'eraser')) {
+                this.drawPath(this.currentPath);
+            } else if (this.currentShape) {
+                this.drawShape(this.currentShape, false, false, true); // isDrawing = true
+            }
+        }
         
         this.ctx.restore();
     }
@@ -965,11 +1030,11 @@ class MagicBrushApp {
         }
     }
     
-    // 改进的线条选择功能 - 点击任意点选择线条(检查所有图层)
+    // 改进的线条选择功能 - 点击任意点选择元素(检查所有图层,支持所有元素类型)
     enhanceLineSelection(x, y) {
-        // 查找点击位置附近的线条
+        // 查找点击位置附近的元素
         const threshold = this.snapThreshold;
-        let selectedLine = null;
+        let selectedElement = null;
         let minDistance = threshold;
         
         // 检查所有图层(从上到下)
@@ -978,20 +1043,102 @@ class MagicBrushApp {
             if (!layer.visible) continue;
             
             for (const element of layer.elements) {
+                let distance = threshold;
+                
+                // 处理画笔/橡皮擦绘制的线条
                 if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
-                    // 检查是否点击了线条上的任意点
                     for (const point of element.points) {
-                        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            selectedLine = element;
+                        const d = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+                        if (d < minDistance) {
+                            minDistance = d;
+                            selectedElement = element;
                         }
+                    }
+                }
+                // 处理直线
+                else if (element.type === 'line') {
+                    const d = this.pointToLineDistance(x, y, element.startX, element.startY, element.endX, element.endY);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        selectedElement = element;
+                    }
+                }
+                // 处理矩形
+                else if (element.type === 'rect') {
+                    const d = this.pointToRectDistance(x, y, element);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        selectedElement = element;
+                    }
+                }
+                // 处理圆形
+                else if (element.type === 'circle') {
+                    const d = Math.abs(Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2)) - element.radius);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        selectedElement = element;
                     }
                 }
             }
         }
         
-        return selectedLine;
+        return selectedElement;
+    }
+    
+    // 计算点到线段的距离
+    pointToLineDistance(px, py, x1, y1, x2, y2) {
+        const A = px - x1;
+        const B = py - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+        
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+        
+        if (lenSq !== 0) param = dot / lenSq;
+        
+        let xx, yy;
+        
+        if (param < 0) {
+            xx = x1;
+            yy = y1;
+        } else if (param > 1) {
+            xx = x2;
+            yy = y2;
+        } else {
+            xx = x1 + param * C;
+            yy = y1 + param * D;
+        }
+        
+        return Math.sqrt(Math.pow(px - xx, 2) + Math.pow(py - yy, 2));
+    }
+    
+    // 计算点到矩形的距离
+    pointToRectDistance(px, py, rect) {
+        const x = rect.startX;
+        const y = rect.startY;
+        const w = rect.width;
+        const h = rect.height;
+        
+        // 找到矩形四条边
+        const left = Math.min(x, x + w);
+        const right = Math.max(x, x + w);
+        const top = Math.min(y, y + h);
+        const bottom = Math.max(y, y + h);
+        
+        // 如果点在矩形内部,返回0
+        if (px >= left && px <= right && py >= top && py <= bottom) {
+            return 0;
+        }
+        
+        // 计算到四条边的最小距离
+        const d1 = this.pointToLineDistance(px, py, left, top, right, top);
+        const d2 = this.pointToLineDistance(px, py, right, top, right, bottom);
+        const d3 = this.pointToLineDistance(px, py, right, bottom, left, bottom);
+        const d4 = this.pointToLineDistance(px, py, left, bottom, left, top);
+        
+        return Math.min(d1, d2, d3, d4);
     }
     
     // 检测鼠标悬停在线条上
@@ -1102,6 +1249,46 @@ class MagicBrushApp {
     updateZoomDisplay() {
         const zoomPercent = Math.round(this.zoomLevel * 100);
         document.getElementById('zoomLevel').textContent = `${zoomPercent}%`;
+    }
+    
+    // 查找指定位置的元素(仅当前图层)
+    findElementAtPosition(x, y) {
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer || !layer.visible) return null;
+        
+        const threshold = this.snapThreshold;
+        
+        for (let i = layer.elements.length - 1; i >= 0; i--) {
+            const element = layer.elements[i];
+            
+            // 检查圆形
+            if (element.type === 'circle') {
+                const d = Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2));
+                if (Math.abs(d - element.radius) < threshold) {
+                    return element;
+                }
+            }
+            // 检查矩形
+            else if (element.type === 'rect') {
+                const d = this.pointToRectDistance(x, y, element);
+                if (d < threshold) {
+                    return element;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    // 删除元素
+    removeElement(element) {
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer) return;
+        
+        const index = layer.elements.indexOf(element);
+        if (index > -1) {
+            layer.elements.splice(index, 1);
+        }
     }
 }
 
