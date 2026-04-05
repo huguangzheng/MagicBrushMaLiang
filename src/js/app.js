@@ -30,6 +30,12 @@ class MagicBrushApp {
         this.hoveredLine = null; // 鼠标悬停的线条
         this.selectedLine = null; // 选中的线条
         
+        // 选择工具相关属性
+        this.selectedElement = null; // 当前选中的元素
+        this.isDraggingElement = false; // 是否正在拖动元素
+        this.dragOffsetX = 0; // 拖动偏移X
+        this.dragOffsetY = 0; // 拖动偏移Y
+        
         this.init();
     }
     
@@ -128,12 +134,37 @@ class MagicBrushApp {
         
         // 窗口大小变化
         window.addEventListener('resize', () => this.setupCanvas());
+        
+        // 键盘事件 - DEL键删除
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete' || e.key === 'Del') {
+                if (this.selectedElement) {
+                    this.deleteSelectedElement();
+                }
+            }
+        });
     }
     
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
         const x = (e.clientX - rect.left) / this.zoomLevel;
         const y = (e.clientY - rect.top) / this.zoomLevel;
+        
+        // 选择工具处理
+        if (this.currentTool === 'select') {
+            const clickedElement = this.enhanceLineSelection(x, y);
+            if (clickedElement) {
+                this.selectedElement = clickedElement;
+                this.isDraggingElement = true;
+                this.dragOffsetX = x;
+                this.dragOffsetY = y;
+                this.render();
+            } else {
+                this.selectedElement = null;
+                this.render();
+            }
+            return;
+        }
         
         // 如果是橡皮擦,检查是否点击了闭合图形
         if (this.currentTool === 'eraser') {
@@ -147,7 +178,7 @@ class MagicBrushApp {
             }
         }
         
-        // 首先检查是否点击了现有线条进行编辑(检查所有图层)
+        // 首先检查是否点击了现有线条进行编辑(仅当前图层)
         const clickedLine = this.enhanceLineSelection(x, y);
         if (clickedLine && this.currentTool !== 'eraser') {
             this.selectedLine = clickedLine;
@@ -209,6 +240,17 @@ class MagicBrushApp {
         const x = (e.clientX - rect.left) / this.zoomLevel;
         const y = (e.clientY - rect.top) / this.zoomLevel;
         
+        // 选择工具拖动元素
+        if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
+            const dx = x - this.dragOffsetX;
+            const dy = y - this.dragOffsetY;
+            this.moveElement(this.selectedElement, dx, dy);
+            this.dragOffsetX = x;
+            this.dragOffsetY = y;
+            this.render();
+            return;
+        }
+        
         // 检测鼠标悬停在线条上(吸附提示)
         if (!this.isDrawing) {
             const hoveredLine = this.detectLineHover(x, y);
@@ -249,6 +291,15 @@ class MagicBrushApp {
     }
     
     handleMouseUp(e) {
+        // 选择工具释放
+        if (this.currentTool === 'select') {
+            if (this.isDraggingElement) {
+                this.isDraggingElement = false;
+                this.saveHistory();
+            }
+            return;
+        }
+        
         // 如果是编辑模式，使用编辑模式的处理函数
         if (this.currentTool === 'edit') {
             this.handleEditModeMouseUp();
@@ -262,8 +313,11 @@ class MagicBrushApp {
         // 将绘制内容添加到当前图层
         const currentLayer = this.layers[this.currentLayerIndex];
         
-        if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
+        if (this.currentTool === 'brush') {
             currentLayer.elements.push({...this.currentPath});
+        } else if (this.currentTool === 'eraser') {
+            // 橡皮擦不记录痕迹,直接删除路径上的元素
+            this.applyEraser(this.currentPath);
         } else if (this.currentShape) {
             currentLayer.elements.push({...this.currentShape});
         }
@@ -1030,54 +1084,52 @@ class MagicBrushApp {
         }
     }
     
-    // 改进的线条选择功能 - 点击任意点选择元素(检查所有图层,支持所有元素类型)
+    // 改进的线条选择功能 - 点击任意点选择元素(仅当前图层,支持所有元素类型)
     enhanceLineSelection(x, y) {
         // 查找点击位置附近的元素
         const threshold = this.snapThreshold;
         let selectedElement = null;
         let minDistance = threshold;
         
-        // 检查所有图层(从上到下)
-        for (let i = this.layers.length - 1; i >= 0; i--) {
-            const layer = this.layers[i];
-            if (!layer.visible) continue;
+        // 只检查当前图层
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer || !layer.visible) return null;
+        
+        for (const element of layer.elements) {
+            let distance = threshold;
             
-            for (const element of layer.elements) {
-                let distance = threshold;
-                
-                // 处理画笔/橡皮擦绘制的线条
-                if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
-                    for (const point of element.points) {
-                        const d = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                        if (d < minDistance) {
-                            minDistance = d;
-                            selectedElement = element;
-                        }
-                    }
-                }
-                // 处理直线
-                else if (element.type === 'line') {
-                    const d = this.pointToLineDistance(x, y, element.startX, element.startY, element.endX, element.endY);
+            // 处理画笔/橡皮擦绘制的线条
+            if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
+                for (const point of element.points) {
+                    const d = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
                     if (d < minDistance) {
                         minDistance = d;
                         selectedElement = element;
                     }
                 }
-                // 处理矩形
-                else if (element.type === 'rect') {
-                    const d = this.pointToRectDistance(x, y, element);
-                    if (d < minDistance) {
-                        minDistance = d;
-                        selectedElement = element;
-                    }
+            }
+            // 处理直线
+            else if (element.type === 'line') {
+                const d = this.pointToLineDistance(x, y, element.startX, element.startY, element.endX, element.endY);
+                if (d < minDistance) {
+                    minDistance = d;
+                    selectedElement = element;
                 }
-                // 处理圆形
-                else if (element.type === 'circle') {
-                    const d = Math.abs(Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2)) - element.radius);
-                    if (d < minDistance) {
-                        minDistance = d;
-                        selectedElement = element;
-                    }
+            }
+            // 处理矩形
+            else if (element.type === 'rect') {
+                const d = this.pointToRectDistance(x, y, element);
+                if (d < minDistance) {
+                    minDistance = d;
+                    selectedElement = element;
+                }
+            }
+            // 处理圆形
+            else if (element.type === 'circle') {
+                const d = Math.abs(Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2)) - element.radius);
+                if (d < minDistance) {
+                    minDistance = d;
+                    selectedElement = element;
                 }
             }
         }
@@ -1289,6 +1341,89 @@ class MagicBrushApp {
         if (index > -1) {
             layer.elements.splice(index, 1);
         }
+    }
+    
+    // 删除选中的元素
+    deleteSelectedElement() {
+        if (!this.selectedElement) return;
+        
+        this.removeElement(this.selectedElement);
+        this.selectedElement = null;
+        this.saveHistory();
+        this.render();
+    }
+    
+    // 移动元素
+    moveElement(element, dx, dy) {
+        if (element.type === 'brush' || element.type === 'eraser') {
+            // 移动所有点
+            element.points.forEach(point => {
+                point.x += dx;
+                point.y += dy;
+            });
+        } else if (element.type === 'line') {
+            element.startX += dx;
+            element.startY += dy;
+            element.endX += dx;
+            element.endY += dy;
+        } else if (element.type === 'rect') {
+            element.startX += dx;
+            element.startY += dy;
+        } else if (element.type === 'circle') {
+            element.centerX += dx;
+            element.centerY += dy;
+        }
+    }
+    
+    // 应用橡皮擦(删除路径上的元素)
+    applyEraser(eraserPath) {
+        if (!eraserPath || !eraserPath.points || eraserPath.points.length < 2) return;
+        
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer) return;
+        
+        const eraserSize = eraserPath.size;
+        const elementsToRemove = [];
+        
+        // 检查橡皮擦路径是否与元素相交
+        layer.elements.forEach(element => {
+            if (element.type === 'brush' || element.type === 'eraser') {
+                // 检查线条点是否在橡皮擦路径上
+                for (const eraserPoint of eraserPath.points) {
+                    for (const elementPoint of element.points) {
+                        const distance = Math.sqrt(
+                            Math.pow(eraserPoint.x - elementPoint.x, 2) + 
+                            Math.pow(eraserPoint.y - elementPoint.y, 2)
+                        );
+                        if (distance < eraserSize) {
+                            elementsToRemove.push(element);
+                            return;
+                        }
+                    }
+                }
+            } else if (element.type === 'line') {
+                // 检查直线是否与橡皮擦路径相交
+                for (const eraserPoint of eraserPath.points) {
+                    const d = this.pointToLineDistance(
+                        eraserPoint.x, eraserPoint.y,
+                        element.startX, element.startY,
+                        element.endX, element.endY
+                    );
+                    if (d < eraserSize) {
+                        elementsToRemove.push(element);
+                        break;
+                    }
+                }
+            }
+        });
+        
+        // 删除相交的元素
+        elementsToRemove.forEach(element => {
+            const index = layer.elements.indexOf(element);
+            if (index > -1) {
+                layer.elements.splice(index, 1);
+            }
+        });
     }
 }
 
