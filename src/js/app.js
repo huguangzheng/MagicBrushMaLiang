@@ -309,6 +309,8 @@ class MagicBrushApp {
                 startY: y,
                 width: 0,
                 height: 0,
+                centerX: x,
+                centerY: y,
                 fill: false
             };
         } else if (this.currentTool === 'circle') {
@@ -405,6 +407,8 @@ class MagicBrushApp {
         } else if (this.currentTool === 'rect') {
             this.currentShape.width = x - this.currentShape.startX;
             this.currentShape.height = y - this.currentShape.startY;
+            this.currentShape.centerX = this.currentShape.startX + this.currentShape.width / 2;
+            this.currentShape.centerY = this.currentShape.startY + this.currentShape.height / 2;
             this.render();
         } else if (this.currentTool === 'circle') {
             const dx = x - this.currentShape.centerX;
@@ -674,7 +678,7 @@ class MagicBrushApp {
                 
                 if (element.type === 'brush' || element.type === 'eraser') {
                     this.drawPath(element, isHovered, isSelected);
-                } else if (element.type === 'line' || element.type === 'rect' || element.type === 'circle') {
+                } else if (element.type === 'line' || element.type === 'rect' || element.type === 'circle' || element.type === 'ellipse' || element.type === 'star') {
                     this.drawShape(element, isHovered, isSelected);
                 }
             });
@@ -686,17 +690,29 @@ class MagicBrushApp {
                 this.drawPath(this.currentPath);
             } else if (this.currentShape) {
                 this.drawShape(this.currentShape, false, false, true); // isDrawing = true
-                
-                // 如果正在绘制圆形,显示圆心
-                if (this.currentTool === 'circle' && this.currentShape.centerX !== undefined) {
+
+                // 如果正在绘制闭合图形,显示中心点
+                if ((this.currentTool === 'circle' || this.currentTool === 'ellipse' || this.currentTool === 'star') && this.currentShape.centerX !== undefined) {
                     this.drawCircleCenter(this.currentShape.centerX, this.currentShape.centerY);
                 }
             }
         }
 
-        // 选择工具拖动圆形时持续显示圆心
-        if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement && this.selectedElement.type === 'circle') {
-            this.drawCircleCenter(this.selectedElement.centerX, this.selectedElement.centerY);
+        // 选择工具拖动闭合图形时持续显示中心点
+        if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
+            const type = this.selectedElement.type;
+            if (type === 'circle' || type === 'ellipse' || type === 'star' || type === 'rect') {
+                this.drawCircleCenter(this.selectedElement.centerX, this.selectedElement.centerY);
+            }
+        }
+
+        // 显示选中元素的中心点
+        if (this.selectedElements.length > 0) {
+            this.selectedElements.forEach(element => {
+                if (element.type === 'circle' || element.type === 'ellipse' || element.type === 'star' || element.type === 'rect') {
+                    this.drawCircleCenter(element.centerX, element.centerY);
+                }
+            });
         }
 
         // 绘制选择框
