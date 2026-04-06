@@ -39,7 +39,15 @@ class MagicBrushApp {
         this.isDraggingElement = false; // 是否正在拖动元素
         this.dragOffsetX = 0; // 拖动偏移X
         this.dragOffsetY = 0; // 拖动偏移Y
-        
+
+        // 虚框选择相关属性
+        this.isSelecting = false; // 是否正在选择
+        this.selectionStartX = 0; // 选择框起始X
+        this.selectionStartY = 0; // 选择框起始Y
+        this.selectionEndX = 0; // 选择框结束X
+        this.selectionEndY = 0; // 选择框结束Y
+        this.selectedElements = []; // 选中的多个元素
+
         // 网格相关属性
         this.showGrid = true; // 是否显示网格
         this.gridSize = 10; // 网格大小(像素)
@@ -235,22 +243,16 @@ class MagicBrushApp {
 
     handleMouseDown(e) {
         const { x, y } = this.eventToWorld(e);
-        
-        // 选择工具处理
+
+        // 选择工具处理 - 开始虚框选择
         if (this.currentTool === 'select') {
-            const clickedElement = this.enhanceLineSelection(x, y);
-            if (clickedElement) {
-                this.selectedElement = clickedElement;
-                this.isDraggingElement = true;
-                this.dragOffsetX = x;
-                this.dragOffsetY = y;
-                this.canvas.style.cursor = 'grab'; // 改变鼠标为抓手形状
-                this.render();
-            } else {
-                this.selectedElement = null;
-                this.canvas.style.cursor = 'default'; // 恢复默认鼠标
-                this.render();
-            }
+            this.isSelecting = true;
+            this.selectionStartX = x;
+            this.selectionStartY = y;
+            this.selectionEndX = x;
+            this.selectionEndY = y;
+            this.selectedElements = [];
+            this.render();
             return;
         }
         
@@ -333,6 +335,14 @@ class MagicBrushApp {
         // 立即更新标尺和正交虚线
         this.updateRulers();
 
+        // 选择工具 - 更新虚框选择
+        if (this.currentTool === 'select' && this.isSelecting) {
+            this.selectionEndX = x;
+            this.selectionEndY = y;
+            this.render();
+            return;
+        }
+
         // 选择工具拖动元素
         if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement) {
             this.canvas.style.cursor = 'grabbing'; // 改变鼠标为抓取形状
@@ -385,8 +395,13 @@ class MagicBrushApp {
     }
     
     handleMouseUp(e) {
-        // 选择工具释放
+        // 选择工具释放 - 完成虚框选择
         if (this.currentTool === 'select') {
+            if (this.isSelecting) {
+                this.isSelecting = false;
+                this.selectElementsInBox();
+                this.render();
+            }
             if (this.isDraggingElement) {
                 this.isDraggingElement = false;
                 this.canvas.style.cursor = 'default'; // 恢复默认鼠标
@@ -617,6 +632,11 @@ class MagicBrushApp {
         // 选择工具拖动圆形时持续显示圆心
         if (this.currentTool === 'select' && this.isDraggingElement && this.selectedElement && this.selectedElement.type === 'circle') {
             this.drawCircleCenter(this.selectedElement.centerX, this.selectedElement.centerY);
+        }
+
+        // 绘制选择框
+        if (this.isSelecting) {
+            this.drawSelectionBox();
         }
 
         if (this.editMode && this.editingLine && this.editingLine.points) {
@@ -1718,6 +1738,82 @@ class MagicBrushApp {
             this.saveHistory();
             this.updateLayerPreviews();
         }
+    }
+
+    // 绘制选择框
+    drawSelectionBox() {
+        const ctx = this.ctx;
+        ctx.save();
+
+        const x = Math.min(this.selectionStartX, this.selectionEndX);
+        const y = Math.min(this.selectionStartY, this.selectionEndY);
+        const width = Math.abs(this.selectionEndX - this.selectionStartX);
+        const height = Math.abs(this.selectionEndY - this.selectionStartY);
+
+        // 绘制虚线边框
+        ctx.strokeStyle = '#4a9eff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(x, y, width, height);
+
+        // 绘制半透明填充
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.1)';
+        ctx.fillRect(x, y, width, height);
+
+        ctx.restore();
+    }
+
+    // 选择框内的元素
+    selectElementsInBox() {
+        const layer = this.layers[this.currentLayerIndex];
+        if (!layer) return;
+
+        const minX = Math.min(this.selectionStartX, this.selectionEndX);
+        const maxX = Math.max(this.selectionStartX, this.selectionEndX);
+        const minY = Math.min(this.selectionStartY, this.selectionEndY);
+        const maxY = Math.max(this.selectionStartY, this.selectionEndY);
+
+        this.selectedElements = [];
+
+        layer.elements.forEach(element => {
+            if (this.isElementInBox(element, minX, maxX, minY, maxY)) {
+                this.selectedElements.push(element);
+            }
+        });
+    }
+
+    // 检查元素是否在选择框内
+    isElementInBox(element, minX, maxX, minY, maxY) {
+        if (element.type === 'brush' || element.type === 'eraser') {
+            // 检查线条的点是否在选择框内
+            for (const point of element.points) {
+                if (point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY) {
+                    return true;
+                }
+            }
+        } else if (element.type === 'line') {
+            // 检查直线的端点是否在选择框内
+            if ((element.startX >= minX && element.startX <= maxX && element.startY >= minY && element.startY <= maxY) ||
+                (element.endX >= minX && element.endX <= maxX && element.endY >= minY && element.endY <= maxY)) {
+                return true;
+            }
+        } else if (element.type === 'rect') {
+            // 检查矩形是否与选择框相交
+            const rx = Math.min(element.startX, element.startX + element.width);
+            const rx2 = Math.max(element.startX, element.startX + element.width);
+            const ry = Math.min(element.startY, element.startY + element.height);
+            const ry2 = Math.max(element.startY, element.startY + element.height);
+            if (rx <= maxX && rx2 >= minX && ry <= maxY && ry2 >= minY) {
+                return true;
+            }
+        } else if (element.type === 'circle') {
+            // 检查圆形是否与选择框相交
+            if (element.centerX + element.radius >= minX && element.centerX - element.radius <= maxX &&
+                element.centerY + element.radius >= minY && element.centerY - element.radius <= maxY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // 绘制画布中心原点标记
