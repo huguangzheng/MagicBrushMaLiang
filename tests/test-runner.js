@@ -465,7 +465,7 @@ class TestRunner {
             
             // 新增方法 - 应用橡皮擦
             applyEraser: function(eraserPath) {
-                if (!eraserPath || !eraserPath.points || eraserPath.points.length < 2) return;
+                if (!eraserPath || !eraserPath.points || eraserPath.points.length < 1) return;
 
                 const layer = this.layers[this.currentLayerIndex];
                 if (!layer) return;
@@ -492,55 +492,11 @@ class TestRunner {
                             if (shouldRemove) break;
                         }
                     } else if (element.type === 'line') {
-                        for (const eraserPoint of eraserPath.points) {
-                            const d = this.pointToLineDistance(
-                                eraserPoint.x, eraserPoint.y,
-                                element.startX, element.startY,
-                                element.endX, element.endY
-                            );
-                            if (d <= halfSize) {
-                                shouldRemove = true;
-                                break;
-                            }
-                        }
+                        // 使用isShapeIntersectEraser方法检测线条
+                        shouldRemove = this.isShapeIntersectEraser(element, eraserPath, halfSize);
                     } else if (element.type === 'circle' || element.type === 'rect' || element.type === 'ellipse' || element.type === 'star') {
-                        // 检查闭合图形是否与橡皮擦相交
-                        for (const eraserPoint of eraserPath.points) {
-                            if (element.type === 'circle') {
-                                const distance = Math.sqrt(
-                                    Math.pow(eraserPoint.x - element.centerX, 2) +
-                                    Math.pow(eraserPoint.y - element.centerY, 2)
-                                );
-                                if (Math.abs(distance - element.radius) <= halfSize || distance <= element.radius) {
-                                    shouldRemove = true;
-                                    break;
-                                }
-                            } else if (element.type === 'rect') {
-                                const { startX, startY, width, height } = element;
-                                const x1 = Math.min(startX, startX + width);
-                                const x2 = Math.max(startX, startX + width);
-                                const y1 = Math.min(startY, startY + height);
-                                const y2 = Math.max(startY, startY + height);
-
-                                if (eraserPoint.x >= x1 - halfSize && eraserPoint.x <= x2 + halfSize &&
-                                    eraserPoint.y >= y1 - halfSize && eraserPoint.y <= y2 + halfSize) {
-                                    shouldRemove = true;
-                                    break;
-                                }
-                            } else if (element.type === 'ellipse') {
-                                const distance = this.pointToEllipseDistance(eraserPoint.x, eraserPoint.y, element);
-                                if (distance <= halfSize) {
-                                    shouldRemove = true;
-                                    break;
-                                }
-                            } else if (element.type === 'star') {
-                                const distance = this.pointToStarDistance(eraserPoint.x, eraserPoint.y, element);
-                                if (distance <= halfSize) {
-                                    shouldRemove = true;
-                                    break;
-                                }
-                            }
-                        }
+                        // 使用isShapeIntersectEraser方法检测闭合图形
+                        shouldRemove = this.isShapeIntersectEraser(element, eraserPath, halfSize);
                     }
 
                     if (shouldRemove) {
@@ -554,6 +510,29 @@ class TestRunner {
                         layer.elements.splice(index, 1);
                     }
                 });
+
+                // 检查批量选中的元素是否都被删除了
+                if (this.selectedElements && this.selectedElements.length > 0) {
+                    const remainingSelected = this.selectedElements.filter(element => {
+                        return layer.elements.includes(element);
+                    });
+
+                    if (remainingSelected.length === 0) {
+                        // 所有选中的元素都被删除了，取消批量选中
+                        this.selectedElements = [];
+                        if (this.selectedElement) {
+                            this.selectedElement = null;
+                        }
+                    } else {
+                        // 更新选中状态，保留未被删除的元素
+                        this.selectedElements = remainingSelected;
+                    }
+                }
+
+                // 检查单个选中的元素是否被删除
+                if (this.selectedElement && !layer.elements.includes(this.selectedElement)) {
+                    this.selectedElement = null;
+                }
             },
             
             // 新增方法 - 切换网格显示
@@ -804,6 +783,67 @@ class TestRunner {
                 }
             },
 
+            // 新增方法 - 处理键盘事件
+            handleKeyDown: function(e) {
+                // CTRL+Z 撤销
+                if (e.ctrlKey && e.key === 'z') {
+                    e.preventDefault();
+                    this.undo();
+                    return;
+                }
+
+                // DEL 删除选中的元素
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    // 只有选择工具模式才处理删除
+                    if (this.currentTool !== 'select') {
+                        return;
+                    }
+
+                    // 删除批量选中的元素
+                    if (this.selectedElements.length > 0) {
+                        this.deleteSelectedElements();
+                    }
+
+                    // 删除单个选中的元素
+                    if (this.selectedElement) {
+                        this.removeElement(this.selectedElement);
+                        this.selectedElement = null;
+                    }
+                }
+            },
+
+            // 新增方法 - 删除批量选中的元素
+            deleteSelectedElements: function() {
+                if (this.selectedElements.length === 0) {
+                    return;
+                }
+
+                const currentLayer = this.layers[this.currentLayerIndex];
+                
+                // 从当前图层中删除所有选中的元素
+                this.selectedElements.forEach(element => {
+                    const index = currentLayer.elements.indexOf(element);
+                    if (index > -1) {
+                        currentLayer.elements.splice(index, 1);
+                    }
+                });
+
+                // 清空选中状态
+                this.selectedElements = [];
+                this.selectedElement = null;
+            },
+
+            // 新增方法 - 删除单个元素
+            removeElement: function(element) {
+                const currentLayer = this.layers[this.currentLayerIndex];
+                if (!currentLayer) return;
+
+                const index = currentLayer.elements.indexOf(element);
+                if (index > -1) {
+                    currentLayer.elements.splice(index, 1);
+                }
+            },
+
             // 新增方法 - 计算点到矩形的距离
             pointToRectDistance: function(px, py, rect) {
                 const x = rect.startX;
@@ -829,6 +869,101 @@ class TestRunner {
                 const d4 = this.pointToLineDistance(px, py, left, bottom, left, top);
 
                 return Math.min(d1, d2, d3, d4);
+            },
+
+            // 新增方法 - 检查闭合图形是否与擦除路径相交
+            isShapeIntersectEraser: function(shape, eraserPath, halfSize) {
+                // 首先检查元素的中心点/中点是否与橡皮擦轨迹相交
+                let centerPoint = null;
+                if (shape.type === 'line' || shape.type === 'brush' || shape.type === 'eraser') {
+                    // 线条的中点
+                    if (shape.type === 'line') {
+                        centerPoint = {
+                            x: (shape.startX + shape.endX) / 2,
+                            y: (shape.startY + shape.endY) / 2
+                        };
+                    } else if (shape.points && shape.points.length > 0) {
+                        // 画笔/橡皮擦的平均点
+                        let sumX = 0, sumY = 0;
+                        shape.points.forEach(point => {
+                            sumX += point.x;
+                            sumY += point.y;
+                        });
+                        centerPoint = {
+                            x: sumX / shape.points.length,
+                            y: sumY / shape.points.length
+                        };
+                    }
+                } else if (shape.type === 'circle' || shape.type === 'ellipse' || shape.type === 'star' || shape.type === 'rect') {
+                    // 闭合图形的中心点
+                    centerPoint = {
+                        x: shape.centerX,
+                        y: shape.centerY
+                    };
+                }
+
+                // 检查中心点是否与橡皮擦轨迹相交
+                if (centerPoint) {
+                    for (const eraserPoint of eraserPath.points) {
+                        const distance = Math.sqrt(
+                            Math.pow(eraserPoint.x - centerPoint.x, 2) +
+                            Math.pow(eraserPoint.y - centerPoint.y, 2)
+                        );
+                        if (distance <= halfSize) {
+                            return true;
+                        }
+                    }
+                }
+
+                // 然后检查图形本身是否与橡皮擦轨迹相交
+                for (const eraserPoint of eraserPath.points) {
+                    if (shape.type === 'circle') {
+                        const distance = Math.sqrt(
+                            Math.pow(eraserPoint.x - shape.centerX, 2) +
+                            Math.pow(eraserPoint.y - shape.centerY, 2)
+                        );
+                        // 检查是否在圆的边界附近或内部
+                        if (Math.abs(distance - shape.radius) <= halfSize || distance <= shape.radius) {
+                            return true;
+                        }
+                    } else if (shape.type === 'rect') {
+                        // 检查是否在矩形边界附近或内部
+                        const { startX, startY, width, height } = shape;
+                        const x1 = Math.min(startX, startX + width);
+                        const x2 = Math.max(startX, startX + width);
+                        const y1 = Math.min(startY, startY + height);
+                        const y2 = Math.max(startY, startY + height);
+
+                        // 检查点是否在矩形内部或边界附近
+                        if (eraserPoint.x >= x1 - halfSize && eraserPoint.x <= x2 + halfSize &&
+                            eraserPoint.y >= y1 - halfSize && eraserPoint.y <= y2 + halfSize) {
+                            return true;
+                        }
+                    } else if (shape.type === 'ellipse') {
+                        // 检查椭圆是否与橡皮擦相交
+                        const distance = this.pointToEllipseDistance(eraserPoint.x, eraserPoint.y, shape);
+                        if (distance <= halfSize) {
+                            return true;
+                        }
+                    } else if (shape.type === 'star') {
+                        // 检查五角星是否与橡皮擦相交
+                        const distance = this.pointToStarDistance(eraserPoint.x, eraserPoint.y, shape);
+                        if (distance <= halfSize) {
+                            return true;
+                        }
+                    } else if (shape.type === 'line') {
+                        // 检查直线是否与橡皮擦路径相交
+                        const d = this.pointToLineDistance(
+                            eraserPoint.x, eraserPoint.y,
+                            shape.startX, shape.startY,
+                            shape.endX, shape.endY
+                        );
+                        if (d <= halfSize) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
         };
     }

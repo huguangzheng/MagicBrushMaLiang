@@ -140,7 +140,10 @@ class MagicBrushApp {
         this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('dblclick', this.handleDoubleClick.bind(this));
         this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
-        
+
+        // 键盘事件
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+
         // 按钮事件
         document.getElementById('undoBtn').addEventListener('click', () => this.undo());
         document.getElementById('clearCanvasBtn').addEventListener('click', () => this.clearCanvas());
@@ -514,6 +517,63 @@ class MagicBrushApp {
                 this.render();
             }
         }
+    }
+
+    handleKeyDown(e) {
+        // CTRL+Z 撤销
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault();
+            this.undo();
+            return;
+        }
+
+        // DEL 删除选中的元素
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            // 只有选择工具模式才处理删除
+            if (this.currentTool !== 'select') {
+                return;
+            }
+
+            // 删除批量选中的元素
+            if (this.selectedElements.length > 0) {
+                this.deleteSelectedElements();
+            }
+
+            // 删除单个选中的元素
+            if (this.selectedElement) {
+                this.removeElement(this.selectedElement);
+                this.selectedElement = null;
+                this.render();
+                this.saveHistory();
+            }
+        }
+    }
+
+    /**
+     * 删除批量选中的元素
+     */
+    deleteSelectedElements() {
+        if (this.selectedElements.length === 0) {
+            return;
+        }
+
+        const currentLayer = this.layers[this.currentLayerIndex];
+        
+        // 从当前图层中删除所有选中的元素
+        this.selectedElements.forEach(element => {
+            const index = currentLayer.elements.indexOf(element);
+            if (index > -1) {
+                currentLayer.elements.splice(index, 1);
+            }
+        });
+
+        // 清空选中状态
+        this.selectedElements = [];
+        this.selectedElement = null;
+
+        // 重新渲染和保存历史
+        this.render();
+        this.saveHistory();
     }
 
     handleMouseUp(e) {
@@ -2028,10 +2088,77 @@ class MagicBrushApp {
                 layer.elements.splice(index, 1);
             }
         });
+
+        // 检查批量选中的元素是否都被删除了
+        if (this.selectedElements.length > 0) {
+            const remainingSelected = this.selectedElements.filter(element => {
+                return layer.elements.includes(element);
+            });
+
+            if (remainingSelected.length === 0) {
+                // 所有选中的元素都被删除了，取消批量选中
+                this.selectedElements = [];
+                this.selectedElement = null;
+            } else {
+                // 更新选中状态，保留未被删除的元素
+                this.selectedElements = remainingSelected;
+            }
+        }
+
+        // 检查单个选中的元素是否被删除
+        if (this.selectedElement && !layer.elements.includes(this.selectedElement)) {
+            this.selectedElement = null;
+        }
+
+        // 重新渲染
+        this.render();
     }
 
     // 检查闭合图形是否与擦除路径相交
     isShapeIntersectEraser(shape, eraserPath, halfSize) {
+        // 首先检查元素的中心点/中点是否与橡皮擦轨迹相交
+        let centerPoint = null;
+        if (shape.type === 'line' || shape.type === 'brush' || shape.type === 'eraser') {
+            // 线条的中点
+            if (shape.type === 'line') {
+                centerPoint = {
+                    x: (shape.startX + shape.endX) / 2,
+                    y: (shape.startY + shape.endY) / 2
+                };
+            } else if (shape.points && shape.points.length > 0) {
+                // 画笔/橡皮擦的平均点
+                let sumX = 0, sumY = 0;
+                shape.points.forEach(point => {
+                    sumX += point.x;
+                    sumY += point.y;
+                });
+                centerPoint = {
+                    x: sumX / shape.points.length,
+                    y: sumY / shape.points.length
+                };
+            }
+        } else if (shape.type === 'circle' || shape.type === 'ellipse' || shape.type === 'star' || shape.type === 'rect') {
+            // 闭合图形的中心点
+            centerPoint = {
+                x: shape.centerX,
+                y: shape.centerY
+            };
+        }
+
+        // 检查中心点是否与橡皮擦轨迹相交
+        if (centerPoint) {
+            for (const eraserPoint of eraserPath.points) {
+                const distance = Math.sqrt(
+                    Math.pow(eraserPoint.x - centerPoint.x, 2) +
+                    Math.pow(eraserPoint.y - centerPoint.y, 2)
+                );
+                if (distance <= halfSize) {
+                    return true;
+                }
+            }
+        }
+
+        // 然后检查图形本身是否与橡皮擦轨迹相交
         for (const eraserPoint of eraserPath.points) {
             if (shape.type === 'circle') {
                 const distance = Math.sqrt(
@@ -2065,6 +2192,16 @@ class MagicBrushApp {
                 // 检查五角星是否与橡皮擦相交
                 const distance = this.pointToStarDistance(eraserPoint.x, eraserPoint.y, shape);
                 if (distance <= halfSize) {
+                    return true;
+                }
+            } else if (shape.type === 'line') {
+                // 检查直线是否与橡皮擦路径相交
+                const d = this.pointToLineDistance(
+                    eraserPoint.x, eraserPoint.y,
+                    shape.startX, shape.startY,
+                    shape.endX, shape.endY
+                );
+                if (d <= halfSize) {
                     return true;
                 }
             }

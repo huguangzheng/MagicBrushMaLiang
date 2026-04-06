@@ -24,6 +24,8 @@ class Feature9Tests {
             this.testRightClickBatchMove();
             this.testRectangleCenterPoint();
             this.testDoubleClickDeselect();
+            this.testKeyboardShortcuts();
+            this.testEraserFunctionality();
         });
     }
 
@@ -988,6 +990,319 @@ class Feature9Tests {
 
             // 验证批量选中没有被取消
             this.framework.assertEqual(this.app.selectedElements.length, 2);
+        });
+    }
+
+    /**
+     * 测试快捷键功能
+     */
+    testKeyboardShortcuts() {
+        // 测试handleKeyDown方法存在
+        this.framework.it('应该存在handleKeyDown方法', async () => {
+            this.framework.assertEqual(typeof this.app.handleKeyDown, 'function');
+        });
+
+        // 测试CTRL+Z撤销功能
+        this.framework.it('CTRL+Z应该触发撤销操作', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element);
+            this.app.saveHistory();
+
+            // 删除元素
+            this.app.layers[0].elements = [];
+            this.app.saveHistory();
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+
+            // 模拟CTRL+Z按键
+            const mockEvent = {
+                ctrlKey: true,
+                key: 'z',
+                preventDefault: function() {}
+            };
+
+            this.app.handleKeyDown(mockEvent);
+
+            // 验证元素已恢复
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+        });
+
+        // 测试DEL键删除批量选中的元素
+        this.framework.it('DEL键应该删除批量选中的元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element1 = {
+                type: 'line',
+                startX: 100,
+                startY: 100,
+                endX: 200,
+                endY: 100
+            };
+
+            const element2 = {
+                type: 'circle',
+                centerX: 150,
+                centerY: 150,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element1, element2);
+            this.app.selectedElements = [element1, element2];
+            this.app.currentTool = 'select';
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 2);
+
+            // 模拟DEL键
+            const mockEvent = {
+                key: 'Delete'
+            };
+
+            this.app.handleKeyDown(mockEvent);
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+
+            // 验证批量选中已取消
+            this.framework.assertEqual(this.app.selectedElements.length, 0);
+        });
+
+        // 测试DEL键删除单个选中的元素
+        this.framework.it('DEL键应该删除单个选中的元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'ellipse',
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(element);
+            this.app.selectedElement = element;
+            this.app.currentTool = 'select';
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 模拟DEL键
+            const mockEvent = {
+                key: 'Delete'
+            };
+
+            this.app.handleKeyDown(mockEvent);
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+
+            // 验证单个选中已取消
+            this.framework.assertNull(this.app.selectedElement);
+        });
+
+        // 测试非选择工具模式下DEL键不生效
+        this.framework.it('非选择工具模式下DEL键不应该删除元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element);
+            this.app.selectedElement = element;
+            this.app.currentTool = 'brush'; // 非选择工具
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 模拟DEL键
+            const mockEvent = {
+                key: 'Delete'
+            };
+
+            this.app.handleKeyDown(mockEvent);
+
+            // 验证元素没有被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+        });
+    }
+
+    /**
+     * 测试橡皮擦功能
+     */
+    testEraserFunctionality() {
+        // 测试橡皮擦删除元素（包括中心点）
+        this.framework.it('橡皮擦应该删除经过中心点的元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 创建橡皮擦路径经过圆心
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 100, y: 100 }, // 圆心
+                    { x: 100, y: 101 },
+                    { x: 100, y: 102 }
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 测试橡皮擦删除线条（包括中点）
+        this.framework.it('橡皮擦应该删除经过中点的线条', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'line',
+                startX: 100,
+                startY: 100,
+                endX: 200,
+                endY: 100
+            };
+
+            this.app.layers[0].elements.push(element);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 线条中点是 (150, 100)
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 150, y: 100 }, // 中点
+                    { x: 150, y: 101 },
+                    { x: 150, y: 102 }
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 测试橡皮擦删除后自动取消批量选中
+        this.framework.it('橡皮擦删除所有选中元素后应该自动取消批量选中', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element1 = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            const element2 = {
+                type: 'circle',
+                centerX: 200,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element1, element2);
+            this.app.selectedElements = [element1, element2];
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 2);
+
+            // 创建橡皮擦路径删除两个圆
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 100, y: 100 }, // 第一个圆心
+                    { x: 200, y: 100 }  // 第二个圆心
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素已被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+
+            // 验证批量选中已取消
+            this.framework.assertEqual(this.app.selectedElements.length, 0);
+        });
+
+        // 测试橡皮擦删除部分选中元素后保留选中状态
+        this.framework.it('橡皮擦删除部分选中元素后应该保留剩余元素的选中状态', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element1 = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            const element2 = {
+                type: 'circle',
+                centerX: 200,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element1, element2);
+            this.app.selectedElements = [element1, element2];
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 2);
+
+            // 创建橡皮擦路径只删除第一个圆
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 100, y: 100 }, // 只经过第一个圆心
+                    { x: 100, y: 101 }  // 添加第二个点
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证只有一个元素被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 验证批量选中保留了剩余的元素
+            this.framework.assertEqual(this.app.selectedElements.length, 1);
+            this.framework.assertEqual(this.app.selectedElements[0], element2);
         });
     }
 }
