@@ -138,8 +138,8 @@ class MagicBrushApp {
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('dblclick', this.handleDoubleClick.bind(this));
         this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
-
         
         // 按钮事件
         document.getElementById('undoBtn').addEventListener('click', () => this.undo());
@@ -489,6 +489,31 @@ class MagicBrushApp {
     handleContextMenu(e) {
         e.preventDefault(); // 阻止默认的右键菜单
         // 右键菜单暂无功能，仅阻止默认行为
+    }
+
+    handleDoubleClick(e) {
+        const { x, y } = this.eventToWorld(e);
+
+        // 只有选择工具模式才处理双击
+        if (this.currentTool !== 'select') {
+            return;
+        }
+
+        // 检查双击位置是否有元素
+        const clickedElement = this.enhanceLineSelection(x, y);
+        
+        if (!clickedElement) {
+            // 双击空白处，取消所有批量选中
+            if (this.selectedElements.length > 0) {
+                this.selectedElements = [];
+                this.render();
+            }
+            // 同时也取消单个选中
+            if (this.selectedElement) {
+                this.selectedElement = null;
+                this.render();
+            }
+        }
     }
 
     handleMouseUp(e) {

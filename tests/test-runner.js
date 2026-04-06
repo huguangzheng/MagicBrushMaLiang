@@ -770,6 +770,40 @@ class TestRunner {
                 // 模拟方法
             },
 
+            // 新增方法 - 处理双击事件
+            handleDoubleClick: function(e) {
+                // 模拟canvas的getBoundingClientRect
+                const rect = { left: 0, top: 0 };
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
+
+                // 模拟canvasPointToWorld方法
+                const z = this.zoomLevel || 1;
+                const px0 = this.viewPanX || 0;
+                const py0 = this.viewPanY || 0;
+                const x = (mx - px0) / z;
+                const y = (my - py0) / z;
+
+                // 只有选择工具模式才处理双击
+                if (this.currentTool !== 'select') {
+                    return;
+                }
+
+                // 检查双击位置是否有元素
+                const clickedElement = this.enhanceLineSelection(x, y);
+                
+                if (!clickedElement) {
+                    // 双击空白处，取消所有批量选中
+                    if (this.selectedElements.length > 0) {
+                        this.selectedElements = [];
+                    }
+                    // 同时也取消单个选中
+                    if (this.selectedElement) {
+                        this.selectedElement = null;
+                    }
+                }
+            },
+
             // 新增方法 - 计算点到矩形的距离
             pointToRectDistance: function(px, py, rect) {
                 const x = rect.startX;
