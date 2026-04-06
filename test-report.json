@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-05T15:20:51.337Z",
+  "timestamp": "2026-04-06T11:18:31.230Z",
   "summary": {
-    "total": 157,
-    "passed": 157,
+    "total": 193,
+    "passed": 193,
     "failed": 0,
     "successRate": "100.00%"
   },
@@ -194,116 +194,62 @@
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔大小应该在1-50像素范围内",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔大小应该支持整数",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "应该能够通过滑块调节画笔大小",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔大小应该实时显示",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔大小应该应用到所有工具",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔大小应该在绘制时实时应用",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "改变画笔大小不应影响已绘制的内容",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "画笔预览应该实时显示当前画笔大小",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "改变画笔大小应该更新预览",
       "status": "passed",
       "error": null
     },
     {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
+      "suite": "功能点3: 画笔粗细调节",
       "test": "改变颜色应该更新预览",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "应该能够进入编辑模式",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "编辑模式应该正确初始化",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "应该能够选择线条",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "选择线条后应该显示控制点",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "应该能够拖动控制点",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "拖动控制点应该更新线条",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "编辑应该保持线条连续性",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "编辑应该保持线条属性",
-      "status": "passed",
-      "error": null
-    },
-    {
-      "suite": "功能点3: 画笔粗细调节和线条弧度编辑",
-      "test": "编辑操作应该可以撤销",
       "status": "passed",
       "error": null
     },
@@ -825,6 +771,30 @@
     },
     {
       "suite": "功能点9: 背景颜色和选择工具",
+      "test": "选择工具应该能够选中椭圆元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "选择工具应该能够选中五角星元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "点到椭圆的距离计算应该正确",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "点到五角星的距离计算应该正确",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
       "test": "应该能够移动线条元素",
       "status": "passed",
       "error": null
@@ -844,6 +814,60 @@
     {
       "suite": "功能点9: 背景颜色和选择工具",
       "test": "应该能够移动圆形元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动椭圆元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动五角星元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够设置光标样式",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够计算线条的中点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够计算brush线条的中点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够获取闭合图形的中心点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够获取椭圆的中心点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够获取五角星的中心点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在渲染选择标记的方法",
       "status": "passed",
       "error": null
     },
@@ -874,6 +898,198 @@
     {
       "suite": "功能点9: 背景颜色和选择工具",
       "test": "橡皮擦只对当前图层生效",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能够清除椭圆元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能够清除五角星元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该只清除当前图层的椭圆元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦清除椭圆不应该添加新元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在drawMouseCrosshair方法",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在canvasPointToWorld方法",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "鼠标屏幕坐标应该能正确转换为世界坐标",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "缩放下的坐标转换应该正确",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在批量移动相关属性",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够批量移动多个元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该能够移动单个元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "矩形中心点应该正确计算",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "矩形移动后中心点应该正确更新",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "矩形中心点应该与startX和width一致",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在handleDoubleClick方法",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "双击空白处应该取消批量选中",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "双击空白处应该取消单个选中",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "非选择工具模式下双击不应该取消选中",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "应该存在handleKeyDown方法",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "CTRL+Z应该触发撤销操作",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "DEL键应该删除批量选中的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "DEL键应该删除单个选中的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "非选择工具模式下DEL键不应该删除元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该删除经过中心点的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该删除经过中点的线条",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦删除所有选中元素后应该自动取消批量选中",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦删除部分选中元素后应该保留剩余元素的选中状态",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能删除画笔线条的任意交点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能删除直线的单个交点",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能同时删除多个元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦不应该删除未相交的元素",
+      "status": "passed",
+      "error": null
+    },
+    {
+      "suite": "功能点9: 背景颜色和选择工具",
+      "test": "橡皮擦应该能删除所有类型的图形元素",
       "status": "passed",
       "error": null
     },
