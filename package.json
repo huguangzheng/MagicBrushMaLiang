@@ -1,0 +1,51 @@
+{
+  "name": "magicbrush",
+  "version": "1.0.0",
+  "description": "魔法画笔 - MagicBrush - 一个功能强大的绘图应用",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder -w --x64",
+    "dist:win": "electron-builder -w --x64 --publish never"
+  },
+  "keywords": [
+    "drawing",
+    "paint",
+    "canvas",
+    "graphics",
+    "electron"
+  ],
+  "author": "MagicBrush Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.magicbrush.app",
+    "productName": "MagicBrush",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+        "**/*",
+        "!**/*.test.js",
+        "!tests/**",
+        "!.codeartsdoer/**",
+        "!.arts/**"
+      ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
