@@ -143,6 +143,42 @@ class TestFramework {
     }
 
     /**
+     * 断言小于
+     */
+    assertLessThan(actual, expected, message = '') {
+        if (actual >= expected) {
+            throw new AssertionError(`Expected ${actual} to be less than ${expected}. ${message}`);
+        }
+    }
+
+    /**
+     * 断言小于等于
+     */
+    assertLessThanOrEqual(actual, expected, message = '') {
+        if (actual > expected) {
+            throw new AssertionError(`Expected ${actual} to be less than or equal to ${expected}. ${message}`);
+        }
+    }
+
+    /**
+     * 断言大于
+     */
+    assertGreaterThan(actual, expected, message = '') {
+        if (actual <= expected) {
+            throw new AssertionError(`Expected ${actual} to be greater than ${expected}. ${message}`);
+        }
+    }
+
+    /**
+     * 断言大于等于
+     */
+    assertGreaterThanOrEqual(actual, expected, message = '') {
+        if (actual < expected) {
+            throw new AssertionError(`Expected ${actual} to be greater than or equal to ${expected}. ${message}`);
+        }
+    }
+
+    /**
      * 运行所有测试
      */
     async runAll() {

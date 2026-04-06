@@ -339,9 +339,25 @@ class TestRunner {
                                 selectedElement = element;
                             }
                         }
+                        // 处理椭圆
+                        else if (element.type === 'ellipse') {
+                            const d = this.pointToEllipseDistance(x, y, element);
+                            if (d < minDistance) {
+                                minDistance = d;
+                                selectedElement = element;
+                            }
+                        }
+                        // 处理五角星
+                        else if (element.type === 'star') {
+                            const d = this.pointToStarDistance(x, y, element);
+                            if (d < minDistance) {
+                                minDistance = d;
+                                selectedElement = element;
+                            }
+                        }
                     }
                 }
-                
+
                 return selectedElement;
             },
             
@@ -418,6 +434,12 @@ class TestRunner {
                 } else if (element.type === 'circle') {
                     element.centerX += dx;
                     element.centerY += dy;
+                } else if (element.type === 'ellipse') {
+                    element.centerX += dx;
+                    element.centerY += dy;
+                } else if (element.type === 'star') {
+                    element.centerX += dx;
+                    element.centerY += dy;
                 }
             },
             
@@ -437,30 +459,88 @@ class TestRunner {
             // 新增方法 - 应用橡皮擦
             applyEraser: function(eraserPath) {
                 if (!eraserPath || !eraserPath.points || eraserPath.points.length < 2) return;
-                
+
                 const layer = this.layers[this.currentLayerIndex];
                 if (!layer) return;
-                
+
                 const eraserSize = eraserPath.size;
+                const halfSize = eraserSize / 2;
                 const elementsToRemove = [];
-                
+
                 layer.elements.forEach(element => {
+                    let shouldRemove = false;
+
                     if (element.type === 'brush' || element.type === 'eraser') {
                         for (const eraserPoint of eraserPath.points) {
                             for (const elementPoint of element.points) {
                                 const distance = Math.sqrt(
-                                    Math.pow(eraserPoint.x - elementPoint.x, 2) + 
+                                    Math.pow(eraserPoint.x - elementPoint.x, 2) +
                                     Math.pow(eraserPoint.y - elementPoint.y, 2)
                                 );
-                                if (distance < eraserSize) {
-                                    elementsToRemove.push(element);
-                                    return;
+                                if (distance <= halfSize) {
+                                    shouldRemove = true;
+                                    break;
+                                }
+                            }
+                            if (shouldRemove) break;
+                        }
+                    } else if (element.type === 'line') {
+                        for (const eraserPoint of eraserPath.points) {
+                            const d = this.pointToLineDistance(
+                                eraserPoint.x, eraserPoint.y,
+                                element.startX, element.startY,
+                                element.endX, element.endY
+                            );
+                            if (d <= halfSize) {
+                                shouldRemove = true;
+                                break;
+                            }
+                        }
+                    } else if (element.type === 'circle' || element.type === 'rect' || element.type === 'ellipse' || element.type === 'star') {
+                        // 检查闭合图形是否与橡皮擦相交
+                        for (const eraserPoint of eraserPath.points) {
+                            if (element.type === 'circle') {
+                                const distance = Math.sqrt(
+                                    Math.pow(eraserPoint.x - element.centerX, 2) +
+                                    Math.pow(eraserPoint.y - element.centerY, 2)
+                                );
+                                if (Math.abs(distance - element.radius) <= halfSize || distance <= element.radius) {
+                                    shouldRemove = true;
+                                    break;
+                                }
+                            } else if (element.type === 'rect') {
+                                const { startX, startY, width, height } = element;
+                                const x1 = Math.min(startX, startX + width);
+                                const x2 = Math.max(startX, startX + width);
+                                const y1 = Math.min(startY, startY + height);
+                                const y2 = Math.max(startY, startY + height);
+
+                                if (eraserPoint.x >= x1 - halfSize && eraserPoint.x <= x2 + halfSize &&
+                                    eraserPoint.y >= y1 - halfSize && eraserPoint.y <= y2 + halfSize) {
+                                    shouldRemove = true;
+                                    break;
+                                }
+                            } else if (element.type === 'ellipse') {
+                                const distance = this.pointToEllipseDistance(eraserPoint.x, eraserPoint.y, element);
+                                if (distance <= halfSize) {
+                                    shouldRemove = true;
+                                    break;
+                                }
+                            } else if (element.type === 'star') {
+                                const distance = this.pointToStarDistance(eraserPoint.x, eraserPoint.y, element);
+                                if (distance <= halfSize) {
+                                    shouldRemove = true;
+                                    break;
                                 }
                             }
                         }
                     }
+
+                    if (shouldRemove) {
+                        elementsToRemove.push(element);
+                    }
                 });
-                
+
                 elementsToRemove.forEach(element => {
                     const index = layer.elements.indexOf(element);
                     if (index > -1) {
@@ -485,6 +565,180 @@ class TestRunner {
                 if (layer) {
                     layer.color = color;
                 }
+            },
+
+            // 新增方法 - 计算点到椭圆的距离
+            pointToEllipseDistance: function(px, py, ellipse) {
+                const { centerX, centerY, radiusX, radiusY } = ellipse;
+
+                // 将点转换到椭圆的局部坐标系
+                const dx = px - centerX;
+                const dy = py - centerY;
+
+                // 标准化坐标
+                const normalizedX = dx / radiusX;
+                const normalizedY = dy / radiusY;
+
+                // 计算点到椭圆中心的距离（在标准化坐标系中）
+                const distanceFromCenter = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+
+                // 如果点在椭圆内部，返回0
+                if (distanceFromCenter <= 1) {
+                    return 0;
+                }
+
+                // 使用牛顿迭代法找到椭圆上最近的点
+                let t = Math.atan2(dy * radiusX, dx * radiusY);
+                let iterations = 0;
+                const maxIterations = 10;
+
+                while (iterations < maxIterations) {
+                    const cosT = Math.cos(t);
+                    const sinT = Math.sin(t);
+
+                    // 椭圆上的点
+                    const ellipseX = centerX + radiusX * cosT;
+                    const ellipseY = centerY + radiusY * sinT;
+
+                    // 椭圆在t处的切向量
+                    const tangentX = -radiusX * sinT;
+                    const tangentY = radiusY * cosT;
+
+                    // 从椭圆上的点到目标点的向量
+                    const toPointX = px - ellipseX;
+                    const toPointY = py - ellipseY;
+
+                    // 计算距离函数的导数
+                    const derivative = tangentX * toPointX + tangentY * toPointY;
+
+                    // 如果导数接近0，说明找到了最近点
+                    if (Math.abs(derivative) < 0.001) {
+                        break;
+                    }
+
+                    // 更新t
+                    const step = derivative / (radiusX * radiusX * sinT * sinT + radiusY * radiusY * cosT * cosT);
+                    t -= step;
+                    iterations++;
+                }
+
+                // 计算最近点的坐标
+                const closestX = centerX + radiusX * Math.cos(t);
+                const closestY = centerY + radiusY * Math.sin(t);
+
+                // 返回距离
+                return Math.sqrt(Math.pow(px - closestX, 2) + Math.pow(py - closestY, 2));
+            },
+
+            // 新增方法 - 计算点到五角星的距离
+            pointToStarDistance: function(px, py, star) {
+                const { centerX, centerY, outerRadius, innerRadius, points } = star;
+                const step = Math.PI / points;
+
+                // 计算五角星的所有顶点
+                const vertices = [];
+                for (let i = 0; i < points * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = i * step - Math.PI / 2;
+                    vertices.push({
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle)
+                    });
+                }
+
+                // 计算点到每条边的最小距离
+                let minDistance = Infinity;
+                for (let i = 0; i < vertices.length; i++) {
+                    const nextIndex = (i + 1) % vertices.length;
+                    const v1 = vertices[i];
+                    const v2 = vertices[nextIndex];
+                    const distance = this.pointToLineDistance(px, py, v1.x, v1.y, v2.x, v2.y);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                    }
+                }
+
+                return minDistance;
+            },
+
+            // 新增方法 - 计算点到线段的距离
+            pointToLineDistance: function(px, py, x1, y1, x2, y2) {
+                const A = px - x1;
+                const B = py - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                let param = -1;
+
+                if (lenSq !== 0) param = dot / lenSq;
+
+                let xx, yy;
+
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+
+                return Math.sqrt(Math.pow(px - xx, 2) + Math.pow(py - yy, 2));
+            },
+
+            // 新增方法 - 设置光标样式
+            setCursorStyle: function(cursorStyle) {
+                if (this.canvas) {
+                    const validStyles = ['grab', 'default', 'move', 'pointer'];
+                    if (validStyles.includes(cursorStyle)) {
+                        this.canvas.style = this.canvas.style || {};
+                        this.canvas.style.cursor = cursorStyle;
+                    }
+                }
+            },
+
+            // 新增方法 - 计算线条元素的中点
+            calculateLineMidpoint: function(line) {
+                if (line.type === 'line') {
+                    return {
+                        x: (line.startX + line.endX) / 2,
+                        y: (line.startY + line.endY) / 2
+                    };
+                } else if (line.type === 'brush' || line.type === 'eraser') {
+                    if (line.points && line.points.length > 0) {
+                        let sumX = 0;
+                        let sumY = 0;
+                        line.points.forEach(point => {
+                            sumX += point.x;
+                            sumY += point.y;
+                        });
+                        return {
+                            x: sumX / line.points.length,
+                            y: sumY / line.points.length
+                        };
+                    }
+                }
+                return { x: 0, y: 0 };
+            },
+
+            // 新增方法 - 获取闭合图形的中心点
+            getShapeCenter: function(shape) {
+                if (shape.type === 'circle' || shape.type === 'ellipse' || shape.type === 'star' || shape.type === 'rect') {
+                    return {
+                        x: shape.centerX,
+                        y: shape.centerY
+                    };
+                }
+                return { x: 0, y: 0 };
+            },
+
+            // 新增方法 - 渲染选中元素的标记点
+            renderSelectionMarker: function(ctx, element) {
+                // 模拟方法
             }
         };
     }

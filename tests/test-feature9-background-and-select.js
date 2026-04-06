@@ -17,6 +17,7 @@ class Feature9Tests {
             this.testBackgroundColor();
             this.testSelectTool();
             this.testElementMovement();
+            this.testVisualFeedback();
             this.testDeleteElement();
             this.testEraserNoTrace();
         });
@@ -65,17 +66,17 @@ class Feature9Tests {
         this.framework.it('选择工具应该能够选中元素', async () => {
             this.app.layers = [];
             this.app.addLayer('测试图层');
-            
+
             const testElement = {
                 type: 'brush',
                 color: '#000000',
                 size: 5,
                 points: [{x: 100, y: 100}, {x: 101, y: 100}]
             };
-            
+
             this.app.layers[0].elements.push(testElement);
             this.app.currentTool = 'select';
-            
+
             const selected = this.app.enhanceLineSelection(100, 100);
             this.framework.assertNotNull(selected);
         });
@@ -85,35 +86,118 @@ class Feature9Tests {
             this.app.currentLayerIndex = 0;
             this.app.addLayer('图层1');
             this.app.addLayer('图层2');
-            
+
             const element1 = {
                 type: 'brush',
                 color: '#ff0000',
                 size: 5,
                 points: [{x: 50, y: 50}, {x: 51, y: 50}]
             };
-            
+
             const element2 = {
                 type: 'brush',
                 color: '#00ff00',
                 size: 5,
                 points: [{x: 150, y: 50}, {x: 151, y: 50}]
             };
-            
+
             this.app.layers[0].elements.push(element1);
             this.app.layers[1].elements.push(element2);
-            
+
             // 选择图层1
             this.app.currentLayerIndex = 0;
             const selected = this.app.enhanceLineSelection(50, 50);
             this.framework.assertNotNull(selected);
             this.framework.assertEqual(selected.color, '#ff0000');
-            
+
             // 切换到图层2
             this.app.currentLayerIndex = 1;
             const selected2 = this.app.enhanceLineSelection(150, 50);
             this.framework.assertNotNull(selected2);
             this.framework.assertEqual(selected2.color, '#00ff00');
+        });
+
+        // 新增：测试椭圆元素选择
+        this.framework.it('选择工具应该能够选中椭圆元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const ellipseElement = {
+                type: 'ellipse',
+                color: '#0000ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(ellipseElement);
+            this.app.currentTool = 'select';
+
+            const selected = this.app.enhanceLineSelection(100, 100);
+            this.framework.assertNotNull(selected);
+            this.framework.assertEqual(selected.type, 'ellipse');
+        });
+
+        // 新增：测试五角星元素选择
+        this.framework.it('选择工具应该能够选中五角星元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const starElement = {
+                type: 'star',
+                color: '#ff00ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                outerRadius: 50,
+                innerRadius: 20,
+                points: 5
+            };
+
+            this.app.layers[0].elements.push(starElement);
+            this.app.currentTool = 'select';
+
+            // 点击五角星的一个顶点附近
+            const selected = this.app.enhanceLineSelection(100, 50);
+            this.framework.assertNotNull(selected);
+            this.framework.assertEqual(selected.type, 'star');
+        });
+
+        // 新增：测试点到椭圆距离计算
+        this.framework.it('点到椭圆的距离计算应该正确', async () => {
+            const ellipse = {
+                type: 'ellipse',
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            // 点在椭圆中心，距离应该为0
+            const distance1 = this.app.pointToEllipseDistance(100, 100, ellipse);
+            this.framework.assertEqual(distance1, 0);
+
+            // 点在椭圆边缘附近
+            const distance2 = this.app.pointToEllipseDistance(150, 100, ellipse);
+            this.framework.assertLessThan(Math.abs(distance2), 5);
+        });
+
+        // 新增：测试点到五角星距离计算
+        this.framework.it('点到五角星的距离计算应该正确', async () => {
+            const star = {
+                type: 'star',
+                centerX: 100,
+                centerY: 100,
+                outerRadius: 50,
+                innerRadius: 20,
+                points: 5
+            };
+
+            // 点在五角星中心，距离应该较小
+            const distance = this.app.pointToStarDistance(100, 100, star);
+            this.framework.assertLessThan(distance, 50);
         });
     }
 
@@ -177,11 +261,135 @@ class Feature9Tests {
                 centerY: 100,
                 radius: 50
             };
-            
+
             this.app.moveElement(element, 20, 30);
-            
+
             this.framework.assertEqual(element.centerX, 120);
             this.framework.assertEqual(element.centerY, 130);
+        });
+
+        // 新增：测试椭圆元素移动
+        this.framework.it('应该能够移动椭圆元素', async () => {
+            const element = {
+                type: 'ellipse',
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.moveElement(element, 25, 35);
+
+            this.framework.assertEqual(element.centerX, 125);
+            this.framework.assertEqual(element.centerY, 135);
+        });
+
+        // 新增：测试五角星元素移动
+        this.framework.it('应该能够移动五角星元素', async () => {
+            const element = {
+                type: 'star',
+                centerX: 100,
+                centerY: 100,
+                outerRadius: 50,
+                innerRadius: 20,
+                points: 5
+            };
+
+            this.app.moveElement(element, 15, 25);
+
+            this.framework.assertEqual(element.centerX, 115);
+            this.framework.assertEqual(element.centerY, 125);
+        });
+
+        // 新增：测试光标样式设置
+        this.framework.it('应该能够设置光标样式', async () => {
+            this.app.setCursorStyle('grab');
+            this.framework.assertEqual(this.app.canvas.style.cursor, 'grab');
+
+            this.app.setCursorStyle('default');
+            this.framework.assertEqual(this.app.canvas.style.cursor, 'default');
+        });
+    }
+
+    /**
+     * 测试视觉反馈功能
+     */
+    testVisualFeedback() {
+        // 新增：测试线条中点计算
+        this.framework.it('应该能够计算线条的中点', async () => {
+            const line = {
+                type: 'line',
+                startX: 0,
+                startY: 0,
+                endX: 10,
+                endY: 10
+            };
+
+            const midpoint = this.app.calculateLineMidpoint(line);
+            this.framework.assertEqual(midpoint.x, 5);
+            this.framework.assertEqual(midpoint.y, 5);
+        });
+
+        // 新增：测试brush线条中点计算
+        this.framework.it('应该能够计算brush线条的中点', async () => {
+            const brush = {
+                type: 'brush',
+                points: [{x: 0, y: 0}, {x: 10, y: 10}, {x: 20, y: 20}]
+            };
+
+            const midpoint = this.app.calculateLineMidpoint(brush);
+            this.framework.assertEqual(midpoint.x, 10);
+            this.framework.assertEqual(midpoint.y, 10);
+        });
+
+        // 新增：测试闭合图形中心点获取
+        this.framework.it('应该能够获取闭合图形的中心点', async () => {
+            const circle = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            const center = this.app.getShapeCenter(circle);
+            this.framework.assertEqual(center.x, 100);
+            this.framework.assertEqual(center.y, 100);
+        });
+
+        // 新增：测试椭圆中心点获取
+        this.framework.it('应该能够获取椭圆的中心点', async () => {
+            const ellipse = {
+                type: 'ellipse',
+                centerX: 150,
+                centerY: 150,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            const center = this.app.getShapeCenter(ellipse);
+            this.framework.assertEqual(center.x, 150);
+            this.framework.assertEqual(center.y, 150);
+        });
+
+        // 新增：测试五角星中心点获取
+        this.framework.it('应该能够获取五角星的中心点', async () => {
+            const star = {
+                type: 'star',
+                centerX: 200,
+                centerY: 200,
+                outerRadius: 50,
+                innerRadius: 20,
+                points: 5
+            };
+
+            const center = this.app.getShapeCenter(star);
+            this.framework.assertEqual(center.x, 200);
+            this.framework.assertEqual(center.y, 200);
+        });
+
+        // 新增：测试渲染选择标记方法存在
+        this.framework.it('应该存在渲染选择标记的方法', async () => {
+            this.framework.assertEqual(typeof this.app.renderSelectionMarker, 'function');
         });
     }
 
@@ -317,6 +525,143 @@ class Feature9Tests {
             this.framework.assertEqual(this.app.layers[0].elements.length, 0);
             // 图层2的元素应该保留
             this.framework.assertEqual(this.app.layers[1].elements.length, 1);
+        });
+
+        // 新增：测试橡皮擦清除椭圆元素
+        this.framework.it('橡皮擦应该能够清除椭圆元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const ellipseElement = {
+                type: 'ellipse',
+                color: '#0000ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(ellipseElement);
+
+            const eraserPath = {
+                type: 'eraser',
+                color: '#ffffff',
+                size: 20,
+                points: [{x: 100, y: 100}, {x: 110, y: 100}]
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 新增：测试橡皮擦清除五角星元素
+        this.framework.it('橡皮擦应该能够清除五角星元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const starElement = {
+                type: 'star',
+                color: '#ff00ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                outerRadius: 50,
+                innerRadius: 20,
+                points: 5
+            };
+
+            this.app.layers[0].elements.push(starElement);
+
+            const eraserPath = {
+                type: 'eraser',
+                color: '#ffffff',
+                size: 30,
+                points: [{x: 100, y: 50}, {x: 110, y: 50}]
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 新增：测试橡皮擦只清除当前图层的椭圆
+        this.framework.it('橡皮擦应该只清除当前图层的椭圆元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('图层1');
+            this.app.addLayer('图层2');
+
+            const ellipse1 = {
+                type: 'ellipse',
+                color: '#0000ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            const ellipse2 = {
+                type: 'ellipse',
+                color: '#ff0000',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(ellipse1);
+            this.app.layers[1].elements.push(ellipse2);
+
+            // 在图层1使用橡皮擦
+            this.app.currentLayerIndex = 0;
+            const eraserPath = {
+                type: 'eraser',
+                color: '#ffffff',
+                size: 20,
+                points: [{x: 100, y: 100}, {x: 110, y: 100}]
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 图层1的椭圆应该被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+            // 图层2的椭圆应该保留
+            this.framework.assertEqual(this.app.layers[1].elements.length, 1);
+        });
+
+        // 新增：测试橡皮擦不添加新元素
+        this.framework.it('橡皮擦清除椭圆不应该添加新元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const ellipseElement = {
+                type: 'ellipse',
+                color: '#0000ff',
+                size: 5,
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(ellipseElement);
+
+            const beforeCount = this.app.layers[0].elements.length;
+
+            const eraserPath = {
+                type: 'eraser',
+                color: '#ffffff',
+                size: 20,
+                points: [{x: 100, y: 100}, {x: 110, y: 100}]
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            const afterCount = this.app.layers[0].elements.length;
+            this.framework.assertLessThanOrEqual(afterCount, beforeCount);
         });
     }
 }

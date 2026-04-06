@@ -246,6 +246,18 @@ class MagicBrushApp {
 
         // 选择工具处理 - 开始虚框选择
         if (this.currentTool === 'select') {
+            // 检查是否点击了现有元素
+            const clickedElement = this.enhanceLineSelection(x, y);
+            if (clickedElement) {
+                this.selectedElement = clickedElement;
+                this.isDraggingElement = true;
+                this.dragOffsetX = x;
+                this.dragOffsetY = y;
+                this.setCursorStyle('grab'); // 设置光标为小手
+                this.render();
+                return;
+            }
+
             this.isSelecting = true;
             this.selectionStartX = x;
             this.selectionStartY = y;
@@ -259,7 +271,8 @@ class MagicBrushApp {
         // 如果是橡皮擦,检查是否点击了闭合图形
         if (this.currentTool === 'eraser') {
             const clickedElement = this.findElementAtPosition(x, y);
-            if (clickedElement && (clickedElement.type === 'circle' || clickedElement.type === 'rect')) {
+            if (clickedElement && (clickedElement.type === 'circle' || clickedElement.type === 'rect' ||
+                clickedElement.type === 'ellipse' || clickedElement.type === 'star')) {
                 // 删除整个闭合图形
                 this.removeElement(clickedElement);
                 this.saveHistory();
@@ -443,7 +456,7 @@ class MagicBrushApp {
             }
             if (this.isDraggingElement) {
                 this.isDraggingElement = false;
-                this.canvas.style.cursor = 'default'; // 恢复默认鼠标
+                this.setCursorStyle('default'); // 恢复默认鼠标
                 this.saveHistory();
             }
             return;
@@ -709,10 +722,13 @@ class MagicBrushApp {
         // 显示选中元素的中心点
         if (this.selectedElements.length > 0) {
             this.selectedElements.forEach(element => {
-                if (element.type === 'circle' || element.type === 'ellipse' || element.type === 'star' || element.type === 'rect') {
-                    this.drawCircleCenter(element.centerX, element.centerY);
-                }
+                this.renderSelectionMarker(this.ctx, element);
             });
+        }
+
+        // 显示当前选中单个元素的标记点
+        if (this.selectedElement) {
+            this.renderSelectionMarker(this.ctx, this.selectedElement);
         }
 
         // 绘制选择框
@@ -1393,6 +1409,100 @@ class MagicBrushApp {
         }
     }
     
+    // 计算点到椭圆的距离
+    pointToEllipseDistance(px, py, ellipse) {
+        const { centerX, centerY, radiusX, radiusY } = ellipse;
+
+        // 将点转换到椭圆的局部坐标系
+        const dx = px - centerX;
+        const dy = py - centerY;
+
+        // 标准化坐标
+        const normalizedX = dx / radiusX;
+        const normalizedY = dy / radiusY;
+
+        // 计算点到椭圆中心的距离（在标准化坐标系中）
+        const distanceFromCenter = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+
+        // 如果点在椭圆内部，返回0
+        if (distanceFromCenter <= 1) {
+            return 0;
+        }
+
+        // 使用牛顿迭代法找到椭圆上最近的点
+        let t = Math.atan2(dy * radiusX, dx * radiusY);
+        let iterations = 0;
+        const maxIterations = 10;
+
+        while (iterations < maxIterations) {
+            const cosT = Math.cos(t);
+            const sinT = Math.sin(t);
+
+            // 椭圆上的点
+            const ellipseX = centerX + radiusX * cosT;
+            const ellipseY = centerY + radiusY * sinT;
+
+            // 椭圆在t处的切向量
+            const tangentX = -radiusX * sinT;
+            const tangentY = radiusY * cosT;
+
+            // 从椭圆上的点到目标点的向量
+            const toPointX = px - ellipseX;
+            const toPointY = py - ellipseY;
+
+            // 计算距离函数的导数
+            const derivative = tangentX * toPointX + tangentY * toPointY;
+
+            // 如果导数接近0，说明找到了最近点
+            if (Math.abs(derivative) < 0.001) {
+                break;
+            }
+
+            // 更新t
+            const step = derivative / (radiusX * radiusX * sinT * sinT + radiusY * radiusY * cosT * cosT);
+            t -= step;
+            iterations++;
+        }
+
+        // 计算最近点的坐标
+        const closestX = centerX + radiusX * Math.cos(t);
+        const closestY = centerY + radiusY * Math.sin(t);
+
+        // 返回距离
+        return Math.sqrt(Math.pow(px - closestX, 2) + Math.pow(py - closestY, 2));
+    }
+
+    // 计算点到五角星的距离
+    pointToStarDistance(px, py, star) {
+        const { centerX, centerY, outerRadius, innerRadius, points } = star;
+        const step = Math.PI / points;
+
+        // 计算五角星的所有顶点
+        const vertices = [];
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = i * step - Math.PI / 2;
+            vertices.push({
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle)
+            });
+        }
+
+        // 计算点到每条边的最小距离
+        let minDistance = Infinity;
+        for (let i = 0; i < vertices.length; i++) {
+            const nextIndex = (i + 1) % vertices.length;
+            const v1 = vertices[i];
+            const v2 = vertices[nextIndex];
+            const distance = this.pointToLineDistance(px, py, v1.x, v1.y, v2.x, v2.y);
+            if (distance < minDistance) {
+                minDistance = distance;
+            }
+        }
+
+        return minDistance;
+    }
+
     // 改进的线条选择功能 - 点击任意点选择元素(仅当前图层,支持所有元素类型)
     enhanceLineSelection(x, y) {
         // 查找点击位置附近的元素
@@ -1441,8 +1551,24 @@ class MagicBrushApp {
                     selectedElement = element;
                 }
             }
+            // 处理椭圆
+            else if (element.type === 'ellipse') {
+                const d = this.pointToEllipseDistance(x, y, element);
+                if (d < minDistance) {
+                    minDistance = d;
+                    selectedElement = element;
+                }
+            }
+            // 处理五角星
+            else if (element.type === 'star') {
+                const d = this.pointToStarDistance(x, y, element);
+                if (d < minDistance) {
+                    minDistance = d;
+                    selectedElement = element;
+                }
+            }
         }
-        
+
         return selectedElement;
     }
     
@@ -1598,12 +1724,12 @@ class MagicBrushApp {
     findElementAtPosition(x, y) {
         const layer = this.layers[this.currentLayerIndex];
         if (!layer || !layer.visible) return null;
-        
+
         const threshold = this.snapThreshold;
-        
+
         for (let i = layer.elements.length - 1; i >= 0; i--) {
             const element = layer.elements[i];
-            
+
             // 检查圆形
             if (element.type === 'circle') {
                 const d = Math.sqrt(Math.pow(x - element.centerX, 2) + Math.pow(y - element.centerY, 2));
@@ -1618,8 +1744,22 @@ class MagicBrushApp {
                     return element;
                 }
             }
+            // 检查椭圆
+            else if (element.type === 'ellipse') {
+                const d = this.pointToEllipseDistance(x, y, element);
+                if (d < threshold) {
+                    return element;
+                }
+            }
+            // 检查五角星
+            else if (element.type === 'star') {
+                const d = this.pointToStarDistance(x, y, element);
+                if (d < threshold) {
+                    return element;
+                }
+            }
         }
-        
+
         return null;
     }
     
@@ -1663,9 +1803,93 @@ class MagicBrushApp {
         } else if (element.type === 'circle') {
             element.centerX += dx;
             element.centerY += dy;
+        } else if (element.type === 'ellipse') {
+            element.centerX += dx;
+            element.centerY += dy;
+        } else if (element.type === 'star') {
+            element.centerX += dx;
+            element.centerY += dy;
         }
     }
-    
+
+    // 设置光标样式
+    setCursorStyle(cursorStyle) {
+        if (this.canvas) {
+            const validStyles = ['grab', 'default', 'move', 'pointer'];
+            if (validStyles.includes(cursorStyle)) {
+                this.canvas.style.cursor = cursorStyle;
+            }
+        }
+    }
+
+    // 计算线条元素的中点
+    calculateLineMidpoint(line) {
+        if (line.type === 'line') {
+            return {
+                x: (line.startX + line.endX) / 2,
+                y: (line.startY + line.endY) / 2
+            };
+        } else if (line.type === 'brush' || line.type === 'eraser') {
+            if (line.points && line.points.length > 0) {
+                let sumX = 0;
+                let sumY = 0;
+                line.points.forEach(point => {
+                    sumX += point.x;
+                    sumY += point.y;
+                });
+                return {
+                    x: sumX / line.points.length,
+                    y: sumY / line.points.length
+                };
+            }
+        }
+        return { x: 0, y: 0 };
+    }
+
+    // 获取闭合图形的中心点
+    getShapeCenter(shape) {
+        if (shape.type === 'circle' || shape.type === 'ellipse' || shape.type === 'star' || shape.type === 'rect') {
+            return {
+                x: shape.centerX,
+                y: shape.centerY
+            };
+        }
+        return { x: 0, y: 0 };
+    }
+
+    // 渲染选中元素的标记点
+    renderSelectionMarker(ctx, element) {
+        if (!element) return;
+
+        let markerX, markerY;
+
+        // 判断元素类型并计算标记点位置
+        if (element.type === 'line' || element.type === 'brush' || element.type === 'eraser') {
+            const midpoint = this.calculateLineMidpoint(element);
+            markerX = midpoint.x;
+            markerY = midpoint.y;
+        } else if (element.type === 'circle' || element.type === 'ellipse' || element.type === 'star' || element.type === 'rect') {
+            const center = this.getShapeCenter(element);
+            markerX = center.x;
+            markerY = center.y;
+        } else {
+            return;
+        }
+
+        // 绘制红色圆形标记
+        ctx.save();
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(markerX, markerY, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 绘制白色边框
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+    }
+
     // 应用橡皮擦(删除路径上的元素)
     applyEraser(eraserPath) {
         if (!eraserPath || !eraserPath.points || eraserPath.points.length < 1) return;
@@ -1710,7 +1934,7 @@ class MagicBrushApp {
                         break;
                     }
                 }
-            } else if (element.type === 'circle' || element.type === 'rect') {
+            } else if (element.type === 'circle' || element.type === 'rect' || element.type === 'ellipse' || element.type === 'star') {
                 // 闭合图形：检查擦除路径是否与图形相交
                 shouldRemove = this.isShapeIntersectEraser(element, eraserPath, halfSize);
             }
@@ -1752,6 +1976,18 @@ class MagicBrushApp {
                 // 检查点是否在矩形内部或边界附近
                 if (eraserPoint.x >= x1 - halfSize && eraserPoint.x <= x2 + halfSize &&
                     eraserPoint.y >= y1 - halfSize && eraserPoint.y <= y2 + halfSize) {
+                    return true;
+                }
+            } else if (shape.type === 'ellipse') {
+                // 检查椭圆是否与橡皮擦相交
+                const distance = this.pointToEllipseDistance(eraserPoint.x, eraserPoint.y, shape);
+                if (distance <= halfSize) {
+                    return true;
+                }
+            } else if (shape.type === 'star') {
+                // 检查五角星是否与橡皮擦相交
+                const distance = this.pointToStarDistance(eraserPoint.x, eraserPoint.y, shape);
+                if (distance <= halfSize) {
                     return true;
                 }
             }
@@ -1891,6 +2127,18 @@ class MagicBrushApp {
             // 检查圆形是否与选择框相交
             if (element.centerX + element.radius >= minX && element.centerX - element.radius <= maxX &&
                 element.centerY + element.radius >= minY && element.centerY - element.radius <= maxY) {
+                return true;
+            }
+        } else if (element.type === 'ellipse') {
+            // 检查椭圆是否与选择框相交
+            if (element.centerX + element.radiusX >= minX && element.centerX - element.radiusX <= maxX &&
+                element.centerY + element.radiusY >= minY && element.centerY - element.radiusY <= maxY) {
+                return true;
+            }
+        } else if (element.type === 'star') {
+            // 检查五角星是否与选择框相交
+            if (element.centerX + element.outerRadius >= minX && element.centerX - element.outerRadius <= maxX &&
+                element.centerY + element.outerRadius >= minY && element.centerY - element.outerRadius <= maxY) {
                 return true;
             }
         }
@@ -2235,6 +2483,28 @@ class MagicBrushApp {
         } else if (element.type === 'circle') {
             ctx.beginPath();
             ctx.arc(element.centerX, element.centerY, element.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (element.type === 'ellipse') {
+            ctx.beginPath();
+            ctx.ellipse(element.centerX, element.centerY, element.radiusX, element.radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (element.type === 'star') {
+            ctx.beginPath();
+            const { centerX, centerY, outerRadius, innerRadius, points } = element;
+            const step = Math.PI / points;
+            ctx.moveTo(
+                centerX + outerRadius * Math.cos(-Math.PI / 2),
+                centerY + outerRadius * Math.sin(-Math.PI / 2)
+            );
+            for (let i = 0; i < points * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = i * step - Math.PI / 2;
+                ctx.lineTo(
+                    centerX + radius * Math.cos(angle),
+                    centerY + radius * Math.sin(angle)
+                );
+            }
+            ctx.closePath();
             ctx.stroke();
         }
     }
