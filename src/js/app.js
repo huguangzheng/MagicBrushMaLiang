@@ -321,6 +321,29 @@ class MagicBrushApp {
                 radius: 0,
                 fill: false
             };
+        } else if (this.currentTool === 'ellipse') {
+            this.currentShape = {
+                type: 'ellipse',
+                color: this.currentColor,
+                size: this.brushSize,
+                centerX: x,
+                centerY: y,
+                radiusX: 0,
+                radiusY: 0,
+                fill: false
+            };
+        } else if (this.currentTool === 'star') {
+            this.currentShape = {
+                type: 'star',
+                color: this.currentColor,
+                size: this.brushSize,
+                centerX: x,
+                centerY: y,
+                outerRadius: 0,
+                innerRadius: 0,
+                points: 5,
+                fill: false
+            };
         }
     }
     
@@ -388,8 +411,20 @@ class MagicBrushApp {
             const dy = y - this.currentShape.centerY;
             this.currentShape.radius = Math.sqrt(dx * dx + dy * dy);
             this.render();
+        } else if (this.currentTool === 'ellipse') {
+            const dx = x - this.currentShape.centerX;
+            const dy = y - this.currentShape.centerY;
+            this.currentShape.radiusX = Math.abs(dx);
+            this.currentShape.radiusY = Math.abs(dy);
+            this.render();
+        } else if (this.currentTool === 'star') {
+            const dx = x - this.currentShape.centerX;
+            const dy = y - this.currentShape.centerY;
+            this.currentShape.outerRadius = Math.sqrt(dx * dx + dy * dy);
+            this.currentShape.innerRadius = this.currentShape.outerRadius * 0.4;
+            this.render();
         }
-        
+
         this.lastX = x;
         this.lastY = y;
     }
@@ -484,14 +519,14 @@ class MagicBrushApp {
     
     drawShape(shape, isHovered = false, isSelected = false, isDrawing = false) {
         const ctx = this.ctx;
-        
+
         // 如果是选中或悬停状态,先绘制高亮效果
         if (isSelected || isHovered) {
             ctx.beginPath();
             ctx.strokeStyle = '#4a9eff';
             ctx.lineWidth = shape.size + 4;
             ctx.globalAlpha = 0.3;
-            
+
             if (shape.type === 'line') {
                 ctx.moveTo(shape.startX, shape.startY);
                 ctx.lineTo(shape.endX, shape.endY);
@@ -499,8 +534,12 @@ class MagicBrushApp {
                 ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
             } else if (shape.type === 'circle') {
                 ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+            } else if (shape.type === 'ellipse') {
+                ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+            } else if (shape.type === 'star') {
+                this.drawStarPath(ctx, shape);
             }
-            
+
             ctx.stroke();
             ctx.closePath();
             ctx.globalAlpha = 1;
@@ -519,6 +558,10 @@ class MagicBrushApp {
             ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
         } else if (shape.type === 'circle') {
             ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+        } else if (shape.type === 'ellipse') {
+            ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, 0, 0, Math.PI * 2);
+        } else if (shape.type === 'star') {
+            this.drawStarPath(ctx, shape);
         }
         
         ctx.stroke();
@@ -564,6 +607,28 @@ class MagicBrushApp {
             }
         }
         return '#ffffff';
+    }
+
+    // 绘制五角星路径
+    drawStarPath(ctx, star) {
+        const { centerX, centerY, outerRadius, innerRadius, points } = star;
+        const step = Math.PI / points;
+
+        ctx.moveTo(
+            centerX + outerRadius * Math.cos(-Math.PI / 2),
+            centerY + outerRadius * Math.sin(-Math.PI / 2)
+        );
+
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = i * step - Math.PI / 2;
+            ctx.lineTo(
+                centerX + radius * Math.cos(angle),
+                centerY + radius * Math.sin(angle)
+            );
+        }
+
+        ctx.closePath();
     }
 
     // 绘制棋盘格背景
