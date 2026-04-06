@@ -15,9 +15,6 @@ class MagicBrushApp {
         this.historyIndex = -1;
         this.autoSaveInterval = null;
         this.selectedPoints = []; // 用于线条编辑
-        this.editingLine = null; // 当前编辑的线条
-        this.editMode = false; // 是否处于编辑模式
-        this.editingPointIndex = -1; // 当前编辑的点的索引
         this.backgroundColor = '#ffffff'; // 背景颜色
         
         // 缩放相关属性
@@ -307,8 +304,6 @@ class MagicBrushApp {
         const clickedLine = this.enhanceLineSelection(x, y);
         if (clickedLine && this.currentTool !== 'eraser') {
             this.selectedLine = clickedLine;
-            this.editingLine = clickedLine;
-            this.editMode = true;
             this.render();
             return;
         }
@@ -446,11 +441,6 @@ class MagicBrushApp {
         }
         
         // 如果是编辑模式，使用编辑模式的处理函数
-        if (this.currentTool === 'edit') {
-            this.handleEditModeMouseMove(e);
-            return;
-        }
-        
         if (!this.isDrawing) return;
         
         if (this.currentTool === 'brush' || this.currentTool === 'eraser') {
@@ -594,12 +584,6 @@ class MagicBrushApp {
                 this.setCursorStyle('default'); // 恢复默认鼠标
                 this.saveHistory();
             }
-            return;
-        }
-        
-        // 如果是编辑模式，使用编辑模式的处理函数
-        if (this.currentTool === 'edit') {
-            this.handleEditModeMouseUp();
             return;
         }
         
@@ -869,10 +853,6 @@ class MagicBrushApp {
         // 绘制选择框
         if (this.isSelecting) {
             this.drawSelectionBox();
-        }
-
-        if (this.editMode && this.editingLine && this.editingLine.points) {
-            this.drawEditingControls();
         }
 
         this.drawGridWorld();
@@ -1379,140 +1359,6 @@ class MagicBrushApp {
     }
     
     // 编辑模式功能
-    handleEditModeClick(x, y) {
-        // 如果已经选择了线条，检查是否点击了控制点
-        if (this.editingLine) {
-            // 检查是否点击了控制点
-            for (let i = 0; i < this.editingLine.points.length; i++) {
-                const point = this.editingLine.points[i];
-                const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                
-                if (distance < 10) {
-                    this.editingPointIndex = i;
-                    this.isDrawing = true;
-                    return;
-                }
-            }
-        }
-        
-        // 查找点击的线条
-        const clickedLine = this.findClickedLine(x, y);
-        
-        if (clickedLine) {
-            this.editingLine = clickedLine;
-            this.editMode = true;
-            this.editingPointIndex = -1;
-            this.render();
-        } else {
-            // 取消编辑
-            this.editingLine = null;
-            this.editMode = false;
-            this.editingPointIndex = -1;
-            this.render();
-        }
-    }
-    
-    findClickedLine(x, y) {
-        const threshold = 10; // 点击容差
-        
-        // 从当前图层开始查找
-        for (let i = this.currentLayerIndex; i < this.layers.length; i++) {
-            const layer = this.layers[i];
-            if (!layer.visible) continue;
-            
-            for (const element of layer.elements) {
-                if ((element.type === 'brush' || element.type === 'eraser') && element.points.length > 1) {
-                    // 检查是否点击了线条上的任意点
-                    for (const point of element.points) {
-                        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                        if (distance < threshold) {
-                            return element;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return null;
-    }
-    
-    drawEditingControls() {
-        if (!this.editingLine || !this.editingLine.points) return;
-
-        const ctx = this.ctx;
-        const points = this.editingLine.points;
-
-        // 只显示3个控制点：首、中、尾
-        const controlPoints = [
-            points[0], // 首点
-            points[Math.floor(points.length / 2)], // 中间点
-            points[points.length - 1] // 尾点
-        ];
-
-        // 绘制控制点
-        controlPoints.forEach((point, index) => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
-            ctx.fillStyle = '#4a9eff';
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.closePath();
-        });
-
-        // 显示提示信息
-        ctx.fillStyle = '#4a9eff';
-        ctx.font = '14px Arial';
-        ctx.fillText('点击并拖动控制点来调整线条弧度', 10, 30);
-    }
-    
-    // 增强的鼠标移动事件，支持编辑模式
-    handleEditModeMouseMove(e) {
-        if (!this.editMode || !this.editingLine) return;
-
-        const { mx, my } = this.clientDeltaFromEvent(e);
-        const { x, y } = this.canvasPointToWorld(mx, my);
-
-        // 只检查3个控制点：首、中、尾
-        const points = this.editingLine.points;
-        const controlPointIndices = [
-            0, // 首点
-            Math.floor(points.length / 2), // 中间点
-            points.length - 1 // 尾点
-        ];
-
-        // 检查是否悬停在控制点上
-        let hoveredPointIndex = -1;
-
-        for (const index of controlPointIndices) {
-            const point = points[index];
-            const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-
-            if (distance < 10) {
-                hoveredPointIndex = index;
-                break;
-            }
-        }
-
-        // 更新鼠标样式
-        this.canvas.style.cursor = hoveredPointIndex >= 0 ? 'move' : 'default';
-
-        // 如果正在拖动控制点
-        if (this.isDrawing && this.editingPointIndex >= 0) {
-            this.editingLine.points[this.editingPointIndex] = {x, y};
-            this.render();
-            this.saveHistory();
-        }
-    }
-    
-    // 增强的鼠标释放事件，支持编辑模式
-    handleEditModeMouseUp() {
-        if (this.editMode) {
-            this.isDrawing = false;
-            this.editingPointIndex = -1;
-        }
-    }
     
     // 更新画笔预览
     updateBrushPreview() {
