@@ -741,7 +741,6 @@ class MagicBrushApp {
                 </div>
                 <div class="layer-info">
                     <div class="layer-name" data-layer-index="${i}" title="点击选择${i === 0 ? '' : '，双击重命名'}">${layer.name}</div>
-                    <div class="layer-color-indicator" style="width: 16px; height: 16px; display: inline-block; border: 1px solid #ccc; ${colorStyle}" title="${colorDisplay}"></div>
                 </div>
                 <div class="layer-actions">
                     <button onclick="app.toggleLayerVisibility(${i})">${layer.visible ? '👁️' : '👁️‍🗨️'}</button>
@@ -1184,11 +1183,19 @@ class MagicBrushApp {
     
     drawEditingControls() {
         if (!this.editingLine || !this.editingLine.points) return;
-        
+
         const ctx = this.ctx;
-        
+        const points = this.editingLine.points;
+
+        // 只显示3个控制点：首、中、尾
+        const controlPoints = [
+            points[0], // 首点
+            points[Math.floor(points.length / 2)], // 中间点
+            points[points.length - 1] // 尾点
+        ];
+
         // 绘制控制点
-        this.editingLine.points.forEach((point, index) => {
+        controlPoints.forEach((point, index) => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
             ctx.fillStyle = '#4a9eff';
@@ -1198,7 +1205,7 @@ class MagicBrushApp {
             ctx.stroke();
             ctx.closePath();
         });
-        
+
         // 显示提示信息
         ctx.fillStyle = '#4a9eff';
         ctx.font = '14px Arial';
@@ -1208,28 +1215,34 @@ class MagicBrushApp {
     // 增强的鼠标移动事件，支持编辑模式
     handleEditModeMouseMove(e) {
         if (!this.editMode || !this.editingLine) return;
-        
+
         const { mx, my } = this.clientDeltaFromEvent(e);
         const { x, y } = this.canvasPointToWorld(mx, my);
-        
+
+        // 只检查3个控制点：首、中、尾
+        const points = this.editingLine.points;
+        const controlPointIndices = [
+            0, // 首点
+            Math.floor(points.length / 2), // 中间点
+            points.length - 1 // 尾点
+        ];
+
         // 检查是否悬停在控制点上
         let hoveredPointIndex = -1;
-        
-        if (this.editingLine.points) {
-            for (let i = 0; i < this.editingLine.points.length; i++) {
-                const point = this.editingLine.points[i];
-                const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
-                
-                if (distance < 10) {
-                    hoveredPointIndex = i;
-                    break;
-                }
+
+        for (const index of controlPointIndices) {
+            const point = points[index];
+            const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
+
+            if (distance < 10) {
+                hoveredPointIndex = index;
+                break;
             }
         }
-        
+
         // 更新鼠标样式
         this.canvas.style.cursor = hoveredPointIndex >= 0 ? 'move' : 'default';
-        
+
         // 如果正在拖动控制点
         if (this.isDrawing && this.editingPointIndex >= 0) {
             this.editingLine.points[this.editingPointIndex] = {x, y};
