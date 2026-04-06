@@ -1304,6 +1304,203 @@ class Feature9Tests {
             this.framework.assertEqual(this.app.selectedElements.length, 1);
             this.framework.assertEqual(this.app.selectedElements[0], element2);
         });
+
+        // 测试橡皮擦删除画笔绘制的不规则线条（单个交点）
+        this.framework.it('橡皮擦应该能删除画笔线条的任意交点', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'brush',
+                color: '#000000',
+                size: 5,
+                points: [
+                    { x: 100, y: 100 },
+                    { x: 110, y: 105 },
+                    { x: 120, y: 110 },
+                    { x: 130, y: 115 },
+                    { x: 140, y: 120 }
+                ]
+            };
+
+            this.app.layers[0].elements.push(element);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 创建橡皮擦路径只经过线条上的一个点
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 120, y: 110 }, // 经过线条上的一个点
+                    { x: 120, y: 111 }
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素已被删除（只要有1个交点就删除）
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 测试橡皮擦删除直线（单个交点）
+        this.framework.it('橡皮擦应该能删除直线的单个交点', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'line',
+                startX: 100,
+                startY: 100,
+                endX: 200,
+                endY: 100
+            };
+
+            this.app.layers[0].elements.push(element);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 创建橡皮擦路径只经过直线上的一个点
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 150, y: 100 }, // 经过直线上的一个点
+                    { x: 150, y: 101 }
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素已被删除（只要有1个交点就删除）
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 测试橡皮擦删除多个元素
+        this.framework.it('橡皮擦应该能同时删除多个元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element1 = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            const element2 = {
+                type: 'line',
+                startX: 150,
+                startY: 100,
+                endX: 250,
+                endY: 100
+            };
+
+            const element3 = {
+                type: 'rect',
+                startX: 200,
+                startY: 50,
+                width: 50,
+                height: 50,
+                centerX: 225,
+                centerY: 75
+            };
+
+            this.app.layers[0].elements.push(element1, element2, element3);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 3);
+
+            // 创建橡皮擦路径经过所有元素
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 100, y: 100 }, // 第一个圆心
+                    { x: 150, y: 100 }, // 直线上的点
+                    { x: 225, y: 75 }  // 矩形中心
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证所有元素都被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
+
+        // 测试橡皮擦不删除未相交的元素
+        this.framework.it('橡皮擦不应该删除未相交的元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'circle',
+                centerX: 100,
+                centerY: 100,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+
+            // 创建橡皮擦路径不经过圆（距离较远）
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 300, y: 300 }, // 远离圆的位置
+                    { x: 310, y: 310 }
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证元素未被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 1);
+        });
+
+        // 测试橡皮擦删除不同类型的元素
+        this.framework.it('橡皮擦应该能删除所有类型的图形元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const elements = [
+                { type: 'brush', color: '#000000', size: 5, points: [{ x: 100, y: 100 }, { x: 110, y: 110 }, { x: 120, y: 120 }] },
+                { type: 'line', startX: 150, startY: 100, endX: 250, endY: 100 },
+                { type: 'circle', centerX: 200, centerY: 150, radius: 30 },
+                { type: 'rect', startX: 250, startY: 100, width: 50, height: 50, centerX: 275, centerY: 125 },
+                { type: 'ellipse', centerX: 300, centerY: 150, radiusX: 30, radiusY: 20 },
+                { type: 'star', centerX: 350, centerY: 150, outerRadius: 30, innerRadius: 15, points: 5 }
+            ];
+
+            this.app.layers[0].elements.push(...elements);
+
+            // 验证元素存在
+            this.framework.assertEqual(this.app.layers[0].elements.length, 6);
+
+            // 创建橡皮擦路径经过所有元素的中心/中点
+            const eraserPath = {
+                type: 'eraser',
+                points: [
+                    { x: 110, y: 110 }, // brush中点
+                    { x: 200, y: 100 }, // line中点
+                    { x: 200, y: 150 }, // circle中心
+                    { x: 275, y: 125 }, // rect中心
+                    { x: 300, y: 150 }, // ellipse中心
+                    { x: 350, y: 150 }  // star中心
+                ],
+                size: 10
+            };
+
+            this.app.applyEraser(eraserPath);
+
+            // 验证所有元素都被删除
+            this.framework.assertEqual(this.app.layers[0].elements.length, 0);
+        });
     }
 }
 
