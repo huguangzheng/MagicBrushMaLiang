@@ -48,6 +48,11 @@ class MagicBrushApp {
         this.selectionEndY = 0; // 选择框结束Y
         this.selectedElements = []; // 选中的多个元素
 
+        // 右键批量移动相关属性
+        this.isRightDragging = false; // 是否正在右键拖动
+        this.rightDragStartX = 0; // 右键拖动起始X
+        this.rightDragStartY = 0; // 右键拖动起始Y
+
         // 网格相关属性
         this.showGrid = true; // 是否显示网格
         this.gridSize = 10; // 网格大小(像素)
@@ -133,6 +138,8 @@ class MagicBrushApp {
         this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
         this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+
         
         // 按钮事件
         document.getElementById('undoBtn').addEventListener('click', () => this.undo());
@@ -392,6 +399,27 @@ class MagicBrushApp {
             this.render();
             return;
         }
+
+        // 右键批量移动选中的元素
+        if (this.currentTool === 'select' && this.isRightDragging) {
+            const dx = x - this.rightDragStartX;
+            const dy = y - this.rightDragStartY;
+
+            // 移动所有选中的元素
+            if (this.selectedElements.length > 0) {
+                this.selectedElements.forEach(element => {
+                    this.moveElement(element, dx, dy);
+                });
+            } else if (this.selectedElement) {
+                this.moveElement(this.selectedElement, dx, dy);
+            }
+
+            // 更新起始位置
+            this.rightDragStartX = x;
+            this.rightDragStartY = y;
+            this.render();
+            return;
+        }
         
         // 检测鼠标悬停在线条上(吸附提示)
         if (!this.isDrawing) {
@@ -446,6 +474,24 @@ class MagicBrushApp {
         this.lastY = y;
     }
     
+    handleContextMenu(e) {
+        e.preventDefault(); // 阻止默认的右键菜单
+
+        // 只有选择工具模式和有选中元素时才启用右键批量移动
+        if (this.currentTool !== 'select') {
+            return;
+        }
+
+        if (this.selectedElements.length > 0 || this.selectedElement) {
+            // 开始右键拖动
+            this.isRightDragging = true;
+            const { x, y } = this.eventToWorld(e);
+            this.rightDragStartX = x;
+            this.rightDragStartY = y;
+            this.setCursorStyle('grab'); // 显示抓取光标
+        }
+    }
+
     handleMouseUp(e) {
         // 选择工具释放 - 完成虚框选择
         if (this.currentTool === 'select') {
@@ -456,6 +502,11 @@ class MagicBrushApp {
             }
             if (this.isDraggingElement) {
                 this.isDraggingElement = false;
+                this.setCursorStyle('default'); // 恢复默认鼠标
+                this.saveHistory();
+            }
+            if (this.isRightDragging) {
+                this.isRightDragging = false;
                 this.setCursorStyle('default'); // 恢复默认鼠标
                 this.saveHistory();
             }
@@ -1800,6 +1851,8 @@ class MagicBrushApp {
         } else if (element.type === 'rect') {
             element.startX += dx;
             element.startY += dy;
+            element.centerX += dx;
+            element.centerY += dy;
         } else if (element.type === 'circle') {
             element.centerX += dx;
             element.centerY += dy;
@@ -2190,23 +2243,43 @@ class MagicBrushApp {
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]);
 
-        // 绘制垂直线（完全覆盖画布高度）
+        // 将鼠标屏幕坐标转换为世界坐标
+        const worldMouse = this.canvasPointToWorld(this.mouseX, this.mouseY);
+
+        // 在世界坐标系中绘制十字线，然后转换回屏幕坐标
+        // 计算十字线在世界坐标系的四个边界点（覆盖整个可视区域）
+        const z = this.zoomLevel;
+        const px0 = this.viewPanX;
+        const py0 = this.viewPanY;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // 计算可视区域的世界坐标边界
+        const minWx = -px0 / z;
+        const maxWx = (w - px0) / z;
+        const minWy = -py0 / z;
+        const maxWy = (h - py0) / z;
+
+        // 绘制垂直线（在世界坐标系中从上到下）
         ctx.beginPath();
-        ctx.moveTo(this.mouseX, 0);
-        ctx.lineTo(this.mouseX, this.canvas.height);
+        ctx.moveTo(worldMouse.x, minWy);
+        ctx.lineTo(worldMouse.x, maxWy);
         ctx.stroke();
 
-        // 绘制水平线（完全覆盖画布宽度）
+        // 绘制水平线（在世界坐标系中从左到右）
         ctx.beginPath();
-        ctx.moveTo(0, this.mouseY);
-        ctx.lineTo(this.canvas.width, this.mouseY);
+        ctx.moveTo(minWx, worldMouse.y);
+        ctx.lineTo(maxWx, worldMouse.y);
         ctx.stroke();
 
-        // 计算相对于画布中心的坐标
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
-        const relativeX = Math.round(this.mouseX - centerX);
-        const relativeY = Math.round(this.mouseY - centerY);
+        // 计算相对于世界坐标系原点（画布中心）的坐标
+        const canvasCenterX = this.canvas.width / 2;
+        const canvasCenterY = this.canvas.height / 2;
+        const worldCenterX = (canvasCenterX - px0) / z;
+        const worldCenterY = (canvasCenterY - py0) / z;
+
+        const relativeX = Math.round(worldMouse.x - worldCenterX);
+        const relativeY = Math.round(worldMouse.y - worldCenterY);
 
         // 显示坐标信息
         ctx.setLineDash([]); // 取消虚线
@@ -2216,10 +2289,14 @@ class MagicBrushApp {
         const coordText = `X: ${relativeX}, Y: ${relativeY}`;
         const textWidth = ctx.measureText(coordText).width;
 
+        // 将世界坐标转换为屏幕坐标用于显示文本
+        const screenMouseX = worldMouse.x * z + px0;
+        const screenMouseY = worldMouse.y * z + py0;
+
         // 绘制坐标背景
         const padding = 4;
-        const bgX = this.mouseX + 10;
-        const bgY = this.mouseY - 25;
+        const bgX = screenMouseX + 10;
+        const bgY = screenMouseY - 25;
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.fillRect(bgX, bgY, textWidth + padding * 2, 20);

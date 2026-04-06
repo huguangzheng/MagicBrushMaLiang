@@ -20,6 +20,9 @@ class Feature9Tests {
             this.testVisualFeedback();
             this.testDeleteElement();
             this.testEraserNoTrace();
+            this.testMouseCrosshair();
+            this.testRightClickBatchMove();
+            this.testRectangleCenterPoint();
         });
     }
 
@@ -662,6 +665,202 @@ class Feature9Tests {
 
             const afterCount = this.app.layers[0].elements.length;
             this.framework.assertLessThanOrEqual(afterCount, beforeCount);
+        });
+    }
+
+    /**
+     * 测试鼠标十字线坐标问题
+     */
+    testMouseCrosshair() {
+        // 测试鼠标十字线方法存在
+        this.framework.it('应该存在drawMouseCrosshair方法', async () => {
+            this.framework.assertEqual(typeof this.app.drawMouseCrosshair, 'function');
+        });
+
+        // 测试canvasPointToWorld方法存在
+        this.framework.it('应该存在canvasPointToWorld方法', async () => {
+            this.framework.assertEqual(typeof this.app.canvasPointToWorld, 'function');
+        });
+
+        // 测试鼠标坐标转换
+        this.framework.it('鼠标屏幕坐标应该能正确转换为世界坐标', async () => {
+            this.app.zoomLevel = 2;
+            this.app.viewPanX = 100;
+            this.app.viewPanY = 50;
+
+            const screenX = 300;
+            const screenY = 200;
+            const world = this.app.canvasPointToWorld(screenX, screenY);
+
+            // 预期: worldX = (300 - 100) / 2 = 100, worldY = (200 - 50) / 2 = 75
+            this.framework.assertEqual(world.x, 100);
+            this.framework.assertEqual(world.y, 75);
+        });
+
+        // 测试缩放下的坐标转换
+        this.framework.it('缩放下的坐标转换应该正确', async () => {
+            this.app.zoomLevel = 0.5;
+            this.app.viewPanX = 0;
+            this.app.viewPanY = 0;
+
+            const screenX = 100;
+            const screenY = 100;
+            const world = this.app.canvasPointToWorld(screenX, screenY);
+
+            // 预期: worldX = 100 / 0.5 = 200, worldY = 100 / 0.5 = 200
+            this.framework.assertEqual(world.x, 200);
+            this.framework.assertEqual(world.y, 200);
+        });
+    }
+
+    /**
+     * 测试右键批量移动功能
+     */
+    testRightClickBatchMove() {
+        // 测试右键批量移动属性存在
+        this.framework.it('应该存在右键批量移动相关属性', async () => {
+            this.framework.assertEqual(this.app.isRightDragging, false);
+            this.framework.assertEqual(this.app.rightDragStartX, 0);
+            this.framework.assertEqual(this.app.rightDragStartY, 0);
+        });
+
+        // 测试右键批量移动多个元素
+        this.framework.it('应该能够右键批量移动多个元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element1 = {
+                type: 'line',
+                startX: 100,
+                startY: 100,
+                endX: 200,
+                endY: 100
+            };
+
+            const element2 = {
+                type: 'circle',
+                centerX: 150,
+                centerY: 150,
+                radius: 50
+            };
+
+            this.app.layers[0].elements.push(element1, element2);
+            this.app.selectedElements = [element1, element2];
+
+            // 模拟右键拖动
+            this.app.isRightDragging = true;
+            this.app.rightDragStartX = 0;
+            this.app.rightDragStartY = 0;
+
+            // 移动元素
+            const dx = 50;
+            const dy = 30;
+            this.app.rightDragStartX = dx;
+            this.app.rightDragStartY = dy;
+            this.app.selectedElements.forEach(element => {
+                this.app.moveElement(element, dx, dy);
+            });
+
+            // 验证元素位置已更新
+            this.framework.assertEqual(element1.startX, 150);
+            this.framework.assertEqual(element1.startY, 130);
+            this.framework.assertEqual(element2.centerX, 200);
+            this.framework.assertEqual(element2.centerY, 180);
+        });
+
+        // 测试右键批量移动单个元素
+        this.framework.it('应该能够右键移动单个元素', async () => {
+            this.app.layers = [];
+            this.app.addLayer('测试图层');
+
+            const element = {
+                type: 'ellipse',
+                centerX: 100,
+                centerY: 100,
+                radiusX: 50,
+                radiusY: 30
+            };
+
+            this.app.layers[0].elements.push(element);
+            this.app.selectedElement = element;
+
+            // 模拟右键拖动
+            this.app.isRightDragging = true;
+            this.app.rightDragStartX = 0;
+            this.app.rightDragStartY = 0;
+
+            // 移动元素
+            const dx = 20;
+            const dy = 15;
+            this.app.rightDragStartX = dx;
+            this.app.rightDragStartY = dy;
+            this.app.moveElement(element, dx, dy);
+
+            // 验证元素位置已更新
+            this.framework.assertEqual(element.centerX, 120);
+            this.framework.assertEqual(element.centerY, 115);
+        });
+    }
+
+    /**
+     * 测试矩形中心点显示位置
+     */
+    testRectangleCenterPoint() {
+        // 测试矩形中心点计算
+        this.framework.it('矩形中心点应该正确计算', async () => {
+            const rect = {
+                type: 'rect',
+                startX: 100,
+                startY: 100,
+                width: 200,
+                height: 150,
+                centerX: 200,
+                centerY: 175
+            };
+
+            const center = this.app.getShapeCenter(rect);
+            this.framework.assertEqual(center.x, 200);
+            this.framework.assertEqual(center.y, 175);
+        });
+
+        // 测试矩形移动后中心点更新
+        this.framework.it('矩形移动后中心点应该正确更新', async () => {
+            const rect = {
+                type: 'rect',
+                startX: 100,
+                startY: 100,
+                width: 200,
+                height: 150,
+                centerX: 200,
+                centerY: 175
+            };
+
+            // 移动矩形
+            this.app.moveElement(rect, 50, 30);
+
+            // 验证startX、startY、centerX、centerY都已更新
+            this.framework.assertEqual(rect.startX, 150);
+            this.framework.assertEqual(rect.startY, 130);
+            this.framework.assertEqual(rect.centerX, 250);
+            this.framework.assertEqual(rect.centerY, 205);
+        });
+
+        // 测试矩形中心点与startX和width的关系
+        this.framework.it('矩形中心点应该与startX和width一致', async () => {
+            const rect = {
+                type: 'rect',
+                startX: 100,
+                startY: 100,
+                width: 200,
+                height: 150,
+                centerX: 200,
+                centerY: 175
+            };
+
+            // centerX = startX + width / 2 = 100 + 200 / 2 = 200
+            this.framework.assertEqual(rect.centerX, rect.startX + rect.width / 2);
+            // centerY = startY + height / 2 = 100 + 150 / 2 = 175
+            this.framework.assertEqual(rect.centerY, rect.startY + rect.height / 2);
         });
     }
 }

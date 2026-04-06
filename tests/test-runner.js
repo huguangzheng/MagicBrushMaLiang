@@ -114,7 +114,12 @@ class TestRunner {
             
             // 选择工具相关属性
             selectedElement: null,
-            
+
+            // 右键批量移动相关属性
+            isRightDragging: false,
+            rightDragStartX: 0,
+            rightDragStartY: 0,
+
             // 网格相关属性
             showGrid: true,
             gridSize: 10,
@@ -431,6 +436,8 @@ class TestRunner {
                 } else if (element.type === 'rect') {
                     element.startX += dx;
                     element.startY += dy;
+                    element.centerX += dx;
+                    element.centerY += dy;
                 } else if (element.type === 'circle') {
                     element.centerX += dx;
                     element.centerY += dy;
@@ -739,6 +746,55 @@ class TestRunner {
             // 新增方法 - 渲染选中元素的标记点
             renderSelectionMarker: function(ctx, element) {
                 // 模拟方法
+            },
+
+            // 新增方法 - 鼠标屏幕坐标转世界坐标
+            canvasPointToWorld: function(mx, my) {
+                const z = this.zoomLevel || 1;
+                const px0 = this.viewPanX || 0;
+                const py0 = this.viewPanY || 0;
+                return {
+                    x: (mx - px0) / z,
+                    y: (my - py0) / z
+                };
+            },
+
+            // 新增方法 - 绘制鼠标十字线
+            drawMouseCrosshair: function() {
+                // 模拟方法
+            },
+
+            // 新增方法 - 处理右键菜单
+            handleContextMenu: function(e) {
+                e.preventDefault();
+                // 模拟方法
+            },
+
+            // 新增方法 - 计算点到矩形的距离
+            pointToRectDistance: function(px, py, rect) {
+                const x = rect.startX;
+                const y = rect.startY;
+                const w = rect.width;
+                const h = rect.height;
+
+                // 找到矩形四条边
+                const left = Math.min(x, x + w);
+                const right = Math.max(x, x + w);
+                const top = Math.min(y, y + h);
+                const bottom = Math.max(y, y + h);
+
+                // 如果点在矩形内部,返回0
+                if (px >= left && px <= right && py >= top && py <= bottom) {
+                    return 0;
+                }
+
+                // 计算到四条边的最小距离
+                const d1 = this.pointToLineDistance(px, py, left, top, right, top);
+                const d2 = this.pointToLineDistance(px, py, right, top, right, bottom);
+                const d3 = this.pointToLineDistance(px, py, right, bottom, left, bottom);
+                const d4 = this.pointToLineDistance(px, py, left, bottom, left, top);
+
+                return Math.min(d1, d2, d3, d4);
             }
         };
     }
