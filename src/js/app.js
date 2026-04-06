@@ -22,8 +22,8 @@ class MagicBrushApp {
         
         // 缩放相关属性
         this.zoomLevel = 1; // 缩放级别 (1 = 100%)
-        this.minZoom = 0.1; // 最小缩放
-        this.maxZoom = 5; // 最大缩放
+        this.minZoom = 0.5; // 最小缩放 50%
+        this.maxZoom = 3; // 最大缩放 300%
         this.zoomStep = 0.1; // 缩放步长
         // 视口平移（画布坐标系，与 scale 配合实现以鼠标为中心的缩放）
         this.viewPanX = 0;
@@ -624,6 +624,9 @@ class MagicBrushApp {
         }
 
         this.drawGridWorld();
+
+        // 绘制画布中心原点标记
+        this.drawCanvasOrigin();
 
         // 绘制鼠标位置的正交虚线
         this.drawMouseCrosshair();
@@ -1715,6 +1718,43 @@ class MagicBrushApp {
             this.saveHistory();
             this.updateLayerPreviews();
         }
+    }
+
+    // 绘制画布中心原点标记
+    drawCanvasOrigin() {
+        const ctx = this.ctx;
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+
+        ctx.save();
+
+        // 绘制原点十字标记
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+
+        // 水平线
+        ctx.beginPath();
+        ctx.moveTo(centerX - 10, centerY);
+        ctx.lineTo(centerX + 10, centerY);
+        ctx.stroke();
+
+        // 垂直线
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - 10);
+        ctx.lineTo(centerX, centerY + 10);
+        ctx.stroke();
+
+        // 绘制原点圆圈
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 显示坐标标签
+        ctx.fillStyle = '#ff0000';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('O(0,0)', centerX + 15, centerY - 5);
+
+        ctx.restore();
     }
 
     // 绘制鼠标位置的正交虚线
