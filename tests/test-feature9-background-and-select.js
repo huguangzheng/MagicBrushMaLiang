@@ -714,18 +714,18 @@ class Feature9Tests {
     }
 
     /**
-     * 测试右键批量移动功能
+     * 测试批量移动功能
      */
     testRightClickBatchMove() {
-        // 测试右键批量移动属性存在
-        this.framework.it('应该存在右键批量移动相关属性', async () => {
+        // 测试批量移动相关属性存在
+        this.framework.it('应该存在批量移动相关属性', async () => {
             this.framework.assertEqual(this.app.isRightDragging, false);
             this.framework.assertEqual(this.app.rightDragStartX, 0);
             this.framework.assertEqual(this.app.rightDragStartY, 0);
         });
 
-        // 测试右键批量移动多个元素
-        this.framework.it('应该能够右键批量移动多个元素', async () => {
+        // 测试批量移动多个元素
+        this.framework.it('应该能够批量移动多个元素', async () => {
             this.app.layers = [];
             this.app.addLayer('测试图层');
 
@@ -747,7 +747,7 @@ class Feature9Tests {
             this.app.layers[0].elements.push(element1, element2);
             this.app.selectedElements = [element1, element2];
 
-            // 模拟右键拖动
+            // 模拟批量拖动（左键）
             this.app.isRightDragging = true;
             this.app.rightDragStartX = 0;
             this.app.rightDragStartY = 0;
@@ -768,8 +768,8 @@ class Feature9Tests {
             this.framework.assertEqual(element2.centerY, 180);
         });
 
-        // 测试右键批量移动单个元素
-        this.framework.it('应该能够右键移动单个元素', async () => {
+        // 测试批量移动单个元素
+        this.framework.it('应该能够移动单个元素', async () => {
             this.app.layers = [];
             this.app.addLayer('测试图层');
 
@@ -784,16 +784,16 @@ class Feature9Tests {
             this.app.layers[0].elements.push(element);
             this.app.selectedElement = element;
 
-            // 模拟右键拖动
-            this.app.isRightDragging = true;
-            this.app.rightDragStartX = 0;
-            this.app.rightDragStartY = 0;
+            // 模拟单个元素拖动（左键）
+            this.app.isDraggingElement = true;
+            this.app.dragOffsetX = 0;
+            this.app.dragOffsetY = 0;
 
             // 移动元素
             const dx = 20;
             const dy = 15;
-            this.app.rightDragStartX = dx;
-            this.app.rightDragStartY = dy;
+            this.app.dragOffsetX = dx;
+            this.app.dragOffsetY = dy;
             this.app.moveElement(element, dx, dy);
 
             // 验证元素位置已更新

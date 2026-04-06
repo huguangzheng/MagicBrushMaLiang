@@ -256,6 +256,7 @@ class MagicBrushApp {
             // 检查是否点击了现有元素
             const clickedElement = this.enhanceLineSelection(x, y);
             if (clickedElement) {
+                // 如果点击了元素，设置选中状态
                 this.selectedElement = clickedElement;
                 this.isDraggingElement = true;
                 this.dragOffsetX = x;
@@ -265,6 +266,17 @@ class MagicBrushApp {
                 return;
             }
 
+            // 检查是否有选中的元素（selectedElements），如果有则开始批量移动
+            if (this.selectedElements.length > 0) {
+                this.isRightDragging = true; // 使用右键拖动标志来表示批量拖动
+                this.rightDragStartX = x;
+                this.rightDragStartY = y;
+                this.setCursorStyle('grab'); // 设置光标为小手
+                this.render();
+                return;
+            }
+
+            // 没有选中元素，开始虚框选择
             this.isSelecting = true;
             this.selectionStartX = x;
             this.selectionStartY = y;
@@ -476,20 +488,7 @@ class MagicBrushApp {
     
     handleContextMenu(e) {
         e.preventDefault(); // 阻止默认的右键菜单
-
-        // 只有选择工具模式和有选中元素时才启用右键批量移动
-        if (this.currentTool !== 'select') {
-            return;
-        }
-
-        if (this.selectedElements.length > 0 || this.selectedElement) {
-            // 开始右键拖动
-            this.isRightDragging = true;
-            const { x, y } = this.eventToWorld(e);
-            this.rightDragStartX = x;
-            this.rightDragStartY = y;
-            this.setCursorStyle('grab'); // 显示抓取光标
-        }
+        // 右键菜单暂无功能，仅阻止默认行为
     }
 
     handleMouseUp(e) {
